@@ -677,14 +677,17 @@
   const TRACK_GAP_MS = 20000;   // fix mancanti oltre questo tempo: nuovo segmento, niente linea retta inventata
   const TRACK_MAX_KMH = 250;    // salto impossibile tra due fix: valore scartato come errore GPS
   let trackSeg = 0, trackLastFix = null, trackPending = null, trackSavedAt = 0;
+  // true = traccia recuperata da una sessione precedente e mai esportata: resta ferma (non riceve
+  // nuovi punti) ed è esportabile; il prossimo AVVIA la sostituisce con una traccia nuova
+  let trackRestored = false;
 
   function beginTrack(){
     S.trackOn = true;
     S.trackStart = Date.now();
     S.track = [];
     S.lastTrackPt = null;
-    trackSeg = 0; trackLastFix = null; trackPending = null;
-    persistTrack(true);
+    trackSeg = 0; trackLastFix = null; trackPending = null; trackRestored = false;
+    persistTrack(true); // sovrascrive subito la copia salvata sul telefono
   }
   // il percorso resta salvato sul dispositivo: se l'app viene chiusa dal sistema non si perde
   function persistTrack(force){
@@ -709,6 +712,7 @@
       trackSeg = (d.seg || 0) + 1; // dopo la ripresa si apre un nuovo segmento
       trackLastFix = null; trackPending = null;
       S.trackOn = true;
+      trackRestored = true;
       return true;
     }catch(e){ return false; }
   }
@@ -717,7 +721,7 @@
     S.trackStart = null;
     S.track = [];
     S.lastTrackPt = null;
-    trackPending = null; trackLastFix = null;
+    trackPending = null; trackLastFix = null; trackRestored = false;
     persistTrack(true);
     // niente più punti in arrivo: il timer demo può fermarsi (se il viaggio non è in registrazione)
     if (!S.tracking && S.demoTimer){ clearInterval(S.demoTimer); S.demoTimer = null; }
@@ -726,7 +730,7 @@
   }
 
   function recordTrackPoint(lat, lon, t, ele){
-    if (!S.trackOn) return;
+    if (!S.trackOn || trackRestored) return;
     // fix mancanti a lungo (galleria, schermo spento): il percorso riparte in un nuovo segmento
     if (trackLastFix){
       const dt = t - trackLastFix.t;
@@ -828,7 +832,8 @@
     if (S.tripStart === null) S.tripStart = Date.now();
     // con il salvataggio percorso attivo la traccia parte insieme al viaggio;
     // se già in registrazione (es. dopo un RESET TOTALE) prosegue senza ricominciare
-    if (S.saveTrack && !S.trackOn) beginTrack();
+    // (una traccia recuperata e non esportata viene sostituita da quella nuova)
+    if (S.saveTrack && (!S.trackOn || trackRestored)) beginTrack();
     S.stepLast = null;
     S.win = [];
     S.speed = 0;
