@@ -23,12 +23,13 @@ e la **velocità media di viaggio**.
 - **Impostazioni** — tocca l'ingranaggio in alto a destra per mostrare/nascondere media e velocità attuale
   e per scegliere la **lingua** dell'interfaccia (italiano/inglese, italiano predefinita). I numeri seguono
   il formato della lingua scelta (0,00 km / 0.00 km).
-- **Salvataggio percorso (opzionale)** — attiva **"Salvataggio percorso?"** nelle impostazioni: durante la
-  registrazione l'app segna il percorso. Per salvarlo apri le impostazioni e premi **ESPORTA ORA**: il file
-  **GPX** finisce nella cartella Download (puoi farlo anche a metà viaggio, senza fermare la registrazione:
-  viene salvato il percorso fino a quel momento). **Il RESET TOTALE non salva**: azzera tutto, percorso
-  incluso. Per rivederlo su **Google Maps**: apri *mymaps.google.com* → *Crea mappa* → *Importa* e scegli
-  il file (il GPX si apre anche in molte altre app di mappe e navigatori).
+- **Salvataggio percorso (opzionale)** — attiva **"Salvataggio percorso?"** nelle impostazioni: con **AVVIA**
+  parte anche la registrazione della traccia, che **prosegue anche dopo RESET TOTALE** (il reset azzera solo
+  i conteggi del viaggio, non la traccia) e resta attiva anche in pausa. Per salvarla apri le impostazioni e
+  premi **ESPORTA ORA**: il file **GPX** finisce nella cartella Download e la registrazione della traccia si
+  chiude lì (al prossimo **AVVIA** ne parte una nuova). **Chiudendo l'app la traccia non viene salvata.**
+  Per rivederla su **Google Maps**: apri *mymaps.google.com* → *Crea mappa* → *Importa* e scegli il file
+  (il GPX si apre anche in molte altre app di mappe e navigatori).
 - **N° Vignetta** — conta quante volte è stato premuto **RESET PARZIALE**, parte da **1** e si riporta a 1
   con **RESET TOTALE**.
 - **AVVIA / PAUSA** sempre visibile in basso (barra fissa).

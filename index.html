@@ -315,7 +315,7 @@
     <label class="setting-row" for="saveTrack">
       <div class="setting-text">
         <div class="setting-name" id="saveTrackName">Salvataggio percorso?</div>
-        <div class="setting-desc" id="saveTrackDesc">Registra il percorso durante il viaggio</div>
+        <div class="setting-desc" id="saveTrackDesc">Registra il percorso da AVVIA a ESPORTA ORA</div>
       </div>
       <input type="checkbox" id="saveTrack" class="switch">
     </label>
@@ -331,7 +331,7 @@
       </div>
     </div>
     <p class="sheet-note" id="sheetNote">Media e velocità continuano a essere calcolate anche quando nascoste.</p>
-    <p class="sheet-note" id="gpxNote">Il percorso si salva solo con il tasto ESPORTA ORA: il file .gpx finisce nella cartella Download e si apre su Google Maps (mymaps.google.com → Crea mappa → Importa). Il RESET TOTALE azzera tutto senza salvare.</p>
+    <p class="sheet-note" id="gpxNote">La traccia parte con AVVIA e prosegue anche dopo RESET TOTALE; ESPORTA ORA la salva in un file .gpx nella cartella Download (Google Maps: mymaps.google.com → Crea mappa → Importa) e la interrompe. Chiudendo l'app la traccia non viene salvata.</p>
   </section>
 </div>
 
@@ -363,6 +363,8 @@
     showAvg:false, showNow:false, saveTrack:false,
     track:[],           // punti del percorso registrato (per l'export GPX)
     lastTrackPt:null,   // ultimo punto scritto nel percorso (deduplica)
+    trackOn:false,      // registrazione della traccia in corso: parte con AVVIA, si chiude con ESPORTA ORA
+    trackStart:null,    // istante di partenza della traccia (usato nel nome del file GPX)
     totalKm:0, partialKm:0, vignetta:1,
     moveMs:0, tripStart:null,
     gpsReady:false,
@@ -409,8 +411,8 @@
       sTitle:'IMPOSTAZIONI',
       sShowAvg:'Visualizza media?', sShowAvgDesc:'Mostra la media (km/h)',
       sShowNow:'Visualizza velocità attuale?', sShowNowDesc:'Mostra la velocità attuale (km/h)',
-      sSaveTrack:'Salvataggio percorso?', sSaveTrackDesc:'Registra il percorso durante il viaggio',
-      sGpxNote:'Il percorso si salva solo con il tasto ESPORTA ORA: il file .gpx finisce nella cartella Download e si apre su Google Maps (mymaps.google.com → Crea mappa → Importa). Il RESET TOTALE azzera tutto senza salvare.',
+      sSaveTrack:'Salvataggio percorso?', sSaveTrackDesc:'Registra il percorso da AVVIA a ESPORTA ORA',
+      sGpxNote:'La traccia parte con AVVIA e prosegue anche dopo RESET TOTALE; ESPORTA ORA la salva in un file .gpx nella cartella Download (Google Maps: mymaps.google.com → Crea mappa → Importa) e la interrompe. Chiudendo l\'app la traccia non viene salvata.',
       sNote:'Media e velocità continuano a essere calcolate anche quando nascoste.',
       btnExport:'ESPORTA ORA', tExported:'GPX salvato', tExportEmpty:'Nessun percorso da salvare',
       sLang:'LINGUA', sLangDesc:'Scegli la lingua dell\'app',
@@ -435,8 +437,8 @@
       sTitle:'SETTINGS',
       sShowAvg:'Show average?', sShowAvgDesc:'Shows the average (km/h)',
       sShowNow:'Show current speed?', sShowNowDesc:'Shows the current speed (km/h)',
-      sSaveTrack:'Save route?', sSaveTrackDesc:'Records the route while you drive',
-      sGpxNote:'The route is saved only with the EXPORT NOW button: the .gpx file goes to the Downloads folder and opens in Google Maps (mymaps.google.com → Create a map → Import). TOTAL RESET clears everything without saving.',
+      sSaveTrack:'Save route?', sSaveTrackDesc:'Records the route from START to EXPORT NOW',
+      sGpxNote:'The track starts with START and keeps going even after TOTAL RESET; EXPORT NOW saves it to a .gpx file in the Downloads folder (Google Maps: mymaps.google.com → Create a map → Import) and stops it. Closing the app discards the track.',
       sNote:'Average and speed keep being calculated even when hidden.',
       btnExport:'EXPORT NOW', tExported:'GPX saved', tExportEmpty:'No route to save yet',
       sLang:'LANGUAGE', sLangDesc:'Choose the app language',
@@ -595,10 +597,13 @@
         vibrate(30);
       }
 
+      // la traccia del percorso prosegue anche in pausa o dopo RESET TOTALE:
+      // si interrompe solo con ESPORTA ORA o chiudendo l'app
+      recordTrackPoint(c.latitude, c.longitude, t, c.altitude);
+
       // distanze e velocità si accumulano solo durante la registrazione
       if (S.tracking){
         updateSpeed(c.latitude, c.longitude, acc, t);
-        recordTrackPoint(c.latitude, c.longitude, t, c.altitude);
 
         const step = Math.max(MIN_STEP, Math.min(acc*0.5, MAX_STEP));
         if (S.stepLast){
@@ -643,18 +648,22 @@
   /* ---------- demo ---------- */
 
   function demoTick(){
-    if (!S.tracking) return;
+    // il timer demo resta attivo finché c'è la registrazione del viaggio o della traccia
+    if (!S.tracking && !S.trackOn) return;
     if (!S.demoPos) S.demoPos = { lat:45.0703, lon:7.6869 };
     const d = 11.6; // ~42 km/h, 1 secondo simulato per tick
     S.demoPos.lat += d/111320;
     S.demoPos.lon += Math.cos(Date.now()/15000)*d/111320/120;
     S.accuracy = 4 + Math.random()*3;
-    addDistance(d);
-    S.moveMs += 1000;
-    S.speed = 41.8;
     S.lastFixAt = Date.now();
+    // in pausa l'auto continua a muoversi: la traccia prosegue, la distanza no
     recordTrackPoint(S.demoPos.lat, S.demoPos.lon, Date.now(), null);
     setGps('ok');
+    if (S.tracking){
+      addDistance(d);
+      S.moveMs += 1000;
+      S.speed = 41.8;
+    }
     render();
   }
 
@@ -662,8 +671,27 @@
 
   const TRACK_MIN_M = 5; // distanza minima tra punti salvati: file leggero, forma del percorso intatta
 
+  // ciclo di vita della traccia, indipendente dalla pausa del viaggio:
+  // parte con AVVIA, prosegue dopo RESET TOTALE, si chiude con ESPORTA ORA
+  function beginTrack(){
+    S.trackOn = true;
+    S.trackStart = Date.now();
+    S.track = [];
+    S.lastTrackPt = null;
+  }
+  function stopTrack(){
+    S.trackOn = false;
+    S.trackStart = null;
+    S.track = [];
+    S.lastTrackPt = null;
+    // niente più punti in arrivo: il timer demo può fermarsi (se il viaggio non è in registrazione)
+    if (!S.tracking && S.demoTimer){ clearInterval(S.demoTimer); S.demoTimer = null; }
+    // senza viaggio in corso nemmeno il blocco schermo serve più
+    if (!S.tracking) releaseWakeLock();
+  }
+
   function recordTrackPoint(lat, lon, t, ele){
-    if (!S.saveTrack || !S.tracking) return;
+    if (!S.trackOn) return;
     if (S.lastTrackPt){
       const d = haversine(S.lastTrackPt.lat, S.lastTrackPt.lon, lat, lon);
       if (d < TRACK_MIN_M) return; // troppo vicino all'ultimo punto: niente file gonfi da fermo
@@ -676,13 +704,13 @@
   function pad2(n){ return String(n).padStart(2,'0'); }
 
   function trackName(){
-    const d = new Date();
+    const d = new Date(S.trackStart || Date.now());
     return 'Trip Regolarità ' + d.getFullYear() + '-' + pad2(d.getMonth()+1) + '-' + pad2(d.getDate())
          + ' ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes());
   }
 
   function trackFilename(){
-    const d = new Date();
+    const d = new Date(S.trackStart || Date.now());
     return 'trip-regolarita_' + d.getFullYear() + '-' + pad2(d.getMonth()+1) + '-' + pad2(d.getDate())
          + '_' + pad2(d.getHours()) + pad2(d.getMinutes()) + '.gpx';
   }
@@ -722,7 +750,7 @@
 
   async function acquireWakeLock(){
     try{
-      if ('wakeLock' in navigator && S.tracking && !S.wakeLock){
+      if ('wakeLock' in navigator && (S.tracking || S.trackOn) && !S.wakeLock){
         S.wakeLock = await navigator.wakeLock.request('screen');
         S.wakeLock.addEventListener('release', ()=>{ S.wakeLock = null; });
       }
@@ -746,6 +774,9 @@
 
     S.tracking = true;
     if (S.tripStart === null) S.tripStart = Date.now();
+    // con il salvataggio percorso attivo la traccia parte insieme al viaggio;
+    // se già in registrazione (es. dopo un RESET TOTALE) prosegue senza ricominciare
+    if (S.saveTrack && !S.trackOn) beginTrack();
     S.stepLast = null;
     S.win = [];
     S.speed = 0;
@@ -769,12 +800,14 @@
   function stop(){
     if (!S.tracking) return;
     S.tracking = false;
-    if (S.demoTimer){ clearInterval(S.demoTimer); S.demoTimer = null; }
+    // il timer demo resta attivo se la traccia prosegue anche in pausa
+    if (S.demoTimer && !S.trackOn){ clearInterval(S.demoTimer); S.demoTimer = null; }
     // il timer UI resta attivo per aggiornare la media anche in pausa/fermo
     S.stepLast = null;
     S.win = [];
     S.speed = 0;
-    releaseWakeLock();
+    // con la traccia ancora in registrazione lo schermo resta acceso: il GPS deve continuare a fissare punti
+    if (!S.trackOn) releaseWakeLock();
     updateToggle();
     setGps('idle');
     render();
@@ -826,7 +859,7 @@
     if (ui.showNow) ui.showNow.checked = S.showNow;
   }
 
-  // ESPORTA ORA compare nella barra in basso solo quando il salvataggio percorso è attivo
+  // ESPORTA ORA compare nel pannello impostazioni solo quando il salvataggio percorso è attivo
   function applyTrackUi(){
     ui.exportNow.hidden = !S.saveTrack;
   }
@@ -853,7 +886,8 @@
   function resetTotal(){
     const wasTracking = S.tracking;
     stop(); // mette in pausa se la registrazione è attiva
-    // NB: il percorso NON viene salvato qui: si esporta solo con il tasto ESPORTA ORA nelle impostazioni
+    // NB: la traccia del percorso NON viene toccata: la registrazione prosegue anche dopo il
+    // reset e si chiude solo con ESPORTA ORA (o chiudendo l'app, senza salvare)
     S.totalKm = 0;
     S.partialKm = 0;
     S.vignetta = 1;
@@ -863,8 +897,6 @@
     S.speed = 0;
     S.win = [];
     S.stepLast = null;
-    S.track = [];
-    S.lastTrackPt = null;
     render();
     vibrate([40,60,40]);
     toast((wasTracking ? tr('tResetPaused') : tr('tReset')).replace('{v}', nf1.format(0)));
@@ -921,13 +953,21 @@
   ui.saveTrack.addEventListener('change', ()=>{
     S.saveTrack = ui.saveTrack.checked;
     try{ localStorage.setItem(TRACK_KEY, S.saveTrack ? '1' : '0'); }catch(e){}
+    if (S.saveTrack){
+      // opzione attivata con la registrazione in corso: la traccia parte subito
+      if (S.tracking && !S.trackOn) beginTrack();
+    } else {
+      // opzione disattivata: la traccia si interrompe senza salvare
+      stopTrack();
+    }
     applyTrackUi();
     vibrate(25);
   });
 
-  // salva una copia del percorso fin qui, senza azzerare il viaggio
+  // ESPORTA ORA salva il file GPX e chiude la traccia: al prossimo AVVIA ne parte una nuova
   ui.exportNow.addEventListener('click', ()=>{
     const ok = exportTrack();
+    if (ok) stopTrack();
     vibrate(ok ? 35 : 20);
     toast(ok ? tr('tExported') : tr('tExportEmpty'));
   });
