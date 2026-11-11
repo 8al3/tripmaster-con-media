@@ -3,6 +3,10 @@
 App web installabile (PWA) per Android che usa il GPS del telefono per misurare lo spostamento
 e la **velocità media di viaggio**.
 
+## Novità della 2.0.3
+
+- **Traccia GPX più fedele**: salvataggio automatico sul telefono, tratti separati dove manca il segnale, scarto dei salti GPS impossibili, ultimo punto sempre incluso.
+
 ## Novità della 2.0
 
 - **Velocità media di viaggio** in km/h, calcolata **escludendo soste e pause**.
@@ -27,7 +31,7 @@ e la **velocità media di viaggio**.
   parte anche la registrazione della traccia, che **prosegue anche dopo RESET TOTALE** (il reset azzera solo
   i conteggi del viaggio, non la traccia) e resta attiva anche in pausa. Per salvarla apri le impostazioni e
   premi **ESPORTA ORA**: il file **GPX** finisce nella cartella Download e la registrazione della traccia si
-  chiude lì (al prossimo **AVVIA** ne parte una nuova). **Chiudendo l'app la traccia non viene salvata.**
+  chiude lì (al prossimo **AVVIA** ne parte una nuova). La traccia viene conservata sul telefono (si ripristina se l'app viene chiusa dal sistema) finché non premi **ESPORTA ORA**. Se il GPS resta senza segnale per più di 20 s si apre un nuovo tratto (<trkseg>) invece di una linea retta, i salti GPS impossibili (> 250 km/h) vengono scartati e l'ultimo punto valido entra sempre nel file.
   Per rivederla su **Google Maps**: apri *mymaps.google.com* → *Crea mappa* → *Importa* e scegli il file
   (il GPX si apre anche in molte altre app di mappe e navigatori).
 - **N° Vignetta** — conta quante volte è stato premuto **RESET PARZIALE**, parte da **1** e si riporta a 1

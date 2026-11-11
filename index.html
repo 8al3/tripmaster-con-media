@@ -412,7 +412,7 @@
       sShowAvg:'Visualizza media?', sShowAvgDesc:'Mostra la media (km/h)',
       sShowNow:'Visualizza velocità attuale?', sShowNowDesc:'Mostra la velocità attuale (km/h)',
       sSaveTrack:'Salvataggio percorso?', sSaveTrackDesc:'Registra il percorso da AVVIA a ESPORTA ORA',
-      sGpxNote:'La traccia parte con AVVIA e prosegue anche dopo RESET TOTALE; ESPORTA ORA la salva in un file .gpx nella cartella Download (Google Maps: mymaps.google.com → Crea mappa → Importa) e la interrompe. Chiudendo l\'app la traccia non viene salvata.',
+      sGpxNote:'La traccia parte con AVVIA e prosegue anche dopo RESET TOTALE; ESPORTA ORA la salva in un file .gpx nella cartella Download (Google Maps: mymaps.google.com → Crea mappa → Importa) e la interrompe. La traccia è conservata sul telefono anche se l\'app si chiude; i tratti senza segnale GPS restano separati, senza linee inventate.',
       sNote:'Media e velocità continuano a essere calcolate anche quando nascoste.',
       btnExport:'ESPORTA ORA', tExported:'GPX salvato', tExportEmpty:'Nessun percorso da salvare',
       sLang:'LINGUA', sLangDesc:'Scegli la lingua dell\'app',
@@ -438,7 +438,7 @@
       sShowAvg:'Show average?', sShowAvgDesc:'Shows the average (km/h)',
       sShowNow:'Show current speed?', sShowNowDesc:'Shows the current speed (km/h)',
       sSaveTrack:'Save route?', sSaveTrackDesc:'Records the route from START to EXPORT NOW',
-      sGpxNote:'The track starts with START and keeps going even after TOTAL RESET; EXPORT NOW saves it to a .gpx file in the Downloads folder (Google Maps: mymaps.google.com → Create a map → Import) and stops it. Closing the app discards the track.',
+      sGpxNote:'The track starts with START and keeps going even after TOTAL RESET; EXPORT NOW saves it to a .gpx file in the Downloads folder (Google Maps: mymaps.google.com → Create a map → Import) and stops it. The route is kept on the phone even if the app closes; stretches without GPS signal stay separate, with no invented straight lines.',
       sNote:'Average and speed keep being calculated even when hidden.',
       btnExport:'EXPORT NOW', tExported:'GPX saved', tExportEmpty:'No route to save yet',
       sLang:'LANGUAGE', sLangDesc:'Choose the app language',
@@ -673,17 +673,52 @@
 
   // ciclo di vita della traccia, indipendente dalla pausa del viaggio:
   // parte con AVVIA, prosegue dopo RESET TOTALE, si chiude con ESPORTA ORA
+  const TRACK_STORE = 'tripreg2.trackData';
+  const TRACK_GAP_MS = 20000;   // fix mancanti oltre questo tempo: nuovo segmento, niente linea retta inventata
+  const TRACK_MAX_KMH = 250;    // salto impossibile tra due fix: valore scartato come errore GPS
+  let trackSeg = 0, trackLastFix = null, trackPending = null, trackSavedAt = 0;
+
   function beginTrack(){
     S.trackOn = true;
     S.trackStart = Date.now();
     S.track = [];
     S.lastTrackPt = null;
+    trackSeg = 0; trackLastFix = null; trackPending = null;
+    persistTrack(true);
+  }
+  // il percorso resta salvato sul dispositivo: se l'app viene chiusa dal sistema non si perde
+  function persistTrack(force){
+    const now = Date.now();
+    if (!force && now - trackSavedAt < 5000) return;
+    trackSavedAt = now;
+    try{
+      if (!S.trackOn){ localStorage.removeItem(TRACK_STORE); return; }
+      localStorage.setItem(TRACK_STORE, JSON.stringify({
+        start:S.trackStart, seg:trackSeg,
+        pts:S.track.map(p=>[p.lat, p.lon, p.t, p.ele, p.seg])
+      }));
+    }catch(e){}
+  }
+  function restoreTrack(){
+    try{
+      const d = JSON.parse(localStorage.getItem(TRACK_STORE) || 'null');
+      if (!d || !Array.isArray(d.pts) || !d.pts.length) return false;
+      S.track = d.pts.map(a=>({lat:a[0], lon:a[1], t:a[2], ele:a[3], seg:a[4]}));
+      S.trackStart = d.start || S.track[0].t;
+      S.lastTrackPt = S.track[S.track.length-1];
+      trackSeg = (d.seg || 0) + 1; // dopo la ripresa si apre un nuovo segmento
+      trackLastFix = null; trackPending = null;
+      S.trackOn = true;
+      return true;
+    }catch(e){ return false; }
   }
   function stopTrack(){
     S.trackOn = false;
     S.trackStart = null;
     S.track = [];
     S.lastTrackPt = null;
+    trackPending = null; trackLastFix = null;
+    persistTrack(true);
     // niente più punti in arrivo: il timer demo può fermarsi (se il viaggio non è in registrazione)
     if (!S.tracking && S.demoTimer){ clearInterval(S.demoTimer); S.demoTimer = null; }
     // senza viaggio in corso nemmeno il blocco schermo serve più
@@ -692,13 +727,25 @@
 
   function recordTrackPoint(lat, lon, t, ele){
     if (!S.trackOn) return;
-    if (S.lastTrackPt){
-      const d = haversine(S.lastTrackPt.lat, S.lastTrackPt.lon, lat, lon);
-      if (d < TRACK_MIN_M) return; // troppo vicino all'ultimo punto: niente file gonfi da fermo
+    // fix mancanti a lungo (galleria, schermo spento): il percorso riparte in un nuovo segmento
+    if (trackLastFix){
+      const dt = t - trackLastFix.t;
+      if (dt > TRACK_GAP_MS) trackSeg++;
+      else if (dt > 0){
+        const v = haversine(trackLastFix.lat, trackLastFix.lon, lat, lon) / (dt/1000) * 3.6;
+        if (v > TRACK_MAX_KMH) return; // salto GPS impossibile: scartato
+      }
     }
-    const p = { lat:lat, lon:lon, t:t, ele:(ele != null && isFinite(ele) ? ele : null) };
+    trackLastFix = { lat:lat, lon:lon, t:t };
+    const p = { lat:lat, lon:lon, t:t, ele:(ele != null && isFinite(ele) ? ele : null), seg:trackSeg };
+    if (S.lastTrackPt && S.lastTrackPt.seg === trackSeg){
+      const d = haversine(S.lastTrackPt.lat, S.lastTrackPt.lon, lat, lon);
+      if (d < TRACK_MIN_M){ trackPending = p; return; } // vicino all'ultimo punto: tenuto solo come ultimo fix
+    }
+    trackPending = null;
     S.track.push(p);
     S.lastTrackPt = p;
+    persistTrack(false);
   }
 
   function pad2(n){ return String(n).padStart(2,'0'); }
@@ -721,8 +768,13 @@
     let xml = '<?xml version="1.0" encoding="UTF-8"?>\n'
       + '<gpx version="1.1" creator="Trip Regolarità 2.0" xmlns="http://www.topografix.com/GPX/1/1">\n'
       + '  <trk>\n    <name>' + trackName() + '</name>\n    <trkseg>\n';
-    for (const p of S.track){
-      xml += '      <trkpt lat="' + p.lat.toFixed(6) + '" lon="' + p.lon.toFixed(6) + '">';
+    // l'ultimo fix valido entra sempre, così il file termina dove ci si è davvero fermati
+    const pts = S.track.slice();
+    if (trackPending && pts.length && trackPending.seg === pts[pts.length-1].seg) pts.push(trackPending);
+    let seg = pts.length ? pts[0].seg : 0;
+    for (const p of pts){
+      if (p.seg !== seg){ xml += '    </trkseg>\n    <trkseg>\n'; seg = p.seg; }
+      xml += '      <trkpt lat="' + p.lat.toFixed(7) + '" lon="' + p.lon.toFixed(7) + '">';
       if (p.ele != null) xml += '<ele>' + p.ele.toFixed(1) + '</ele>';
       xml += '<time>' + new Date(p.t).toISOString() + '</time></trkpt>\n';
     }
@@ -986,6 +1038,7 @@
   S.showNow = loadShowNow();
   S.saveTrack = loadSaveTrack();
   ui.saveTrack.checked = S.saveTrack;
+  if (S.saveTrack) restoreTrack(); else { try{ localStorage.removeItem(TRACK_STORE); }catch(e){} }
   applyTrackUi();
   applySpeedVisibility();
   render();
