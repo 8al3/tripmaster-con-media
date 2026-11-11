@@ -7,8 +7,9 @@ e la **velocità media di viaggio**.
 
 - **Velocità media di viaggio** in km/h, calcolata **escludendo soste e pause**.
 - **Velocità attuale** in km/h, aggiornata in tempo reale.
-- **Ingranaggio in alto a destra** con le impostazioni: puoi mostrare o nascondere la media.
-  La scelta viene ricordata sul telefono e la media continua a essere calcolata anche quando è nascosta.
+- **Ingranaggio in alto a destra** con le impostazioni: puoi mostrare o nascondere la media e scegliere la
+  **lingua** (italiano predefinita o inglese). Le scelte vengono ricordate sul telefono e la media continua a
+  essere calcolata anche quando è nascosta.
 - Tutte le funzioni della 1.0 restano invariate.
 
 ## Cosa fa
@@ -19,7 +20,15 @@ e la **velocità media di viaggio**.
 - **Velocità media di viaggio** — distanza totale diviso il tempo trascorso dal tasto **AVVIA**
   al **RESET TOTALE**; include anche soste, fermi e pause.
 - **Velocità attuale** — stima su una finestra di alcuni secondi, filtrata per non seguire il rumore del GPS.
-- **Impostazioni** — tocca l'ingranaggio in alto a destra per mostrare/nascondere la media di viaggio.
+- **Impostazioni** — tocca l'ingranaggio in alto a destra per mostrare/nascondere media e velocità attuale
+  e per scegliere la **lingua** dell'interfaccia (italiano/inglese, italiano predefinita). I numeri seguono
+  il formato della lingua scelta (0,00 km / 0.00 km).
+- **Salvataggio percorso (opzionale)** — attiva **"Salvataggio percorso?"** nelle impostazioni: durante la
+  registrazione l'app segna il percorso. Per salvarlo apri le impostazioni e premi **ESPORTA ORA**: il file
+  **GPX** finisce nella cartella Download (puoi farlo anche a metà viaggio, senza fermare la registrazione:
+  viene salvato il percorso fino a quel momento). **Il RESET TOTALE non salva**: azzera tutto, percorso
+  incluso. Per rivederlo su **Google Maps**: apri *mymaps.google.com* → *Crea mappa* → *Importa* e scegli
+  il file (il GPX si apre anche in molte altre app di mappe e navigatori).
 - **N° Vignetta** — conta quante volte è stato premuto **RESET PARZIALE**, parte da **1** e si riporta a 1
   con **RESET TOTALE**.
 - **AVVIA / PAUSA** sempre visibile in basso (barra fissa).

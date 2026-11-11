@@ -156,6 +156,10 @@
   .sticky-action{position:fixed;left:50%;transform:translateX(-50%);bottom:0;width:100%;max-width:680px;z-index:6;
     padding:8px 14px calc(10px + env(safe-area-inset-bottom));
     background:linear-gradient(180deg,rgba(7,10,15,0) 0%,rgba(7,10,15,.94) 42%,#070a0f 100%)}
+  /* tasto esporta-percorso nel pannello impostazioni: verde "conferma", visibile solo con l'opzione attiva */
+  .btn-export{--face-top:#a7f3d0;--face-mid:#34d399;--face-bot:#059669;--edge:#065f46;color:#03261d;
+    margin-top:12px;min-height:52px;font-size:15px;letter-spacing:.14em}
+  .btn-export[hidden]{display:none}
   /* nastro cauzione sopra il pulsante AVVIA */
   .sticky-action::before{content:'';position:absolute;top:0;left:0;right:0;height:5px;
     background:repeating-linear-gradient(135deg,rgba(239,68,68,.8) 0 16px,rgba(13,17,23,.9) 16px 32px)}
@@ -198,11 +202,25 @@
     background:linear-gradient(180deg,#e2fff0,#0e7d59);
     box-shadow:0 2px 3px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.6)}
 
+  /* selettore lingua a segmenti IT / EN */
+  .lang-seg{display:flex;gap:6px;flex:0 0 auto}
+  .seg-btn{appearance:none;-webkit-appearance:none;min-width:54px;min-height:34px;padding:0 12px;cursor:pointer;
+    font:700 12.5px/1 'Chakra Petch',system-ui,sans-serif;letter-spacing:.08em;color:#9fb2c8;
+    border:1px solid #2c4052;border-radius:10px;background:linear-gradient(180deg,#1b2531,#0f1720);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.10),inset 0 -3px 5px rgba(0,0,0,.45),0 3px 0 #060b11,0 5px 8px rgba(0,0,0,.4);
+    transition:transform .05s ease, box-shadow .05s ease, filter .15s}
+  .seg-btn:active{transform:translateY(3px);box-shadow:inset 0 2px 5px rgba(0,0,0,.55),0 0 0 #060b11,0 2px 4px rgba(0,0,0,.4)}
+  .seg-btn[aria-checked="true"]{color:#052e22;border-color:rgba(52,211,153,.5);
+    background:linear-gradient(180deg,#a7f3d0,#34d399 55%,#0d9488);
+    box-shadow:inset 0 2px 1px rgba(255,255,255,.5),inset 0 -4px 6px rgba(0,0,0,.22),0 3px 0 #065f46,0 5px 8px rgba(0,0,0,.45)}
+
   @media (max-width:420px){
     .brand{font-size:15px;letter-spacing:.07em}
     .badge{font-size:11px;padding:7px 9px}
     .gear{width:37px;height:37px}
     .top-actions{gap:6px}
+    .seg-btn{min-width:46px;padding:0 9px;font-size:12px}
+    .btn-export{font-size:13px}
   }
   @media (max-width:380px){
     .ver{display:none}
@@ -213,6 +231,7 @@
     .card{padding:8px 14px 10px}
     .btn{min-height:42px}
     .btn-main{min-height:50px}
+    .btn-export{min-height:46px}
     .wrap{gap:8px}
     main{gap:8px}
     .speed-grid{gap:8px}
@@ -238,13 +257,13 @@
 
   <main>
     <section class="card c-partial">
-      <div class="label">DISTANZA PARZIALE METRI</div>
+      <div class="label" id="partialLabel">DISTANZA PARZIALE METRI</div>
       <div class="big"><span id="partialM">0</span></div>
       <button id="resetPartial" class="btn btn-amber" style="margin-top:12px">RESET PARZIALE</button>
     </section>
 
     <section class="card c-total">
-      <div class="label cyan">DISTANZA TOTALE KM</div>
+      <div class="label cyan" id="totalLabel">DISTANZA TOTALE KM</div>
       <div class="big"><span id="totalKm">0,00</span></div>
       <button id="resetTotal" class="btn btn-red" style="margin-top:12px">RESET TOTALE</button>
     </section>
@@ -252,7 +271,7 @@
     <section class="card c-speed" id="speedCard">
       <div class="speed-grid">
         <div>
-          <div class="label green">MEDIA</div>
+          <div class="label green" id="avgLabel">MEDIA</div>
           <div class="big"><span id="avgSpeed">0,0</span><span class="unit">km/h</span></div>
         </div>
         <div class="side">
@@ -263,7 +282,7 @@
     </section>
 
     <section class="card c-count">
-      <div class="label green">N° VIGNETTA ROADBOOK</div>
+      <div class="label green" id="vignettaLabel">N° VIGNETTA ROADBOOK</div>
       <div class="big"><span id="vignetta">0</span></div>
     </section>
 
@@ -281,19 +300,38 @@
     </div>
     <label class="setting-row" for="showAvg">
       <div class="setting-text">
-        <div class="setting-name">Visualizza media?</div>
-        <div class="setting-desc">Mostra la media (km/h)</div>
+        <div class="setting-name" id="showAvgName">Visualizza media?</div>
+        <div class="setting-desc" id="showAvgDesc">Mostra la media (km/h)</div>
       </div>
       <input type="checkbox" id="showAvg" class="switch">
     </label>
     <label class="setting-row" for="showNow">
       <div class="setting-text">
-        <div class="setting-name">Visualizza velocità attuale?</div>
-        <div class="setting-desc">Mostra la velocità attuale (km/h)</div>
+        <div class="setting-name" id="showNowName">Visualizza velocità attuale?</div>
+        <div class="setting-desc" id="showNowDesc">Mostra la velocità attuale (km/h)</div>
       </div>
       <input type="checkbox" id="showNow" class="switch">
     </label>
-    <p class="sheet-note">Media e velocità continuano a essere calcolate anche quando nascoste.</p>
+    <label class="setting-row" for="saveTrack">
+      <div class="setting-text">
+        <div class="setting-name" id="saveTrackName">Salvataggio percorso?</div>
+        <div class="setting-desc" id="saveTrackDesc">Registra il percorso durante il viaggio</div>
+      </div>
+      <input type="checkbox" id="saveTrack" class="switch">
+    </label>
+    <button type="button" id="exportNow" class="btn btn-export" hidden>ESPORTA ORA</button>
+    <div class="setting-row">
+      <div class="setting-text">
+        <div class="setting-name" id="langName">LINGUA</div>
+        <div class="setting-desc" id="langDesc">Scegli la lingua dell'app</div>
+      </div>
+      <div class="lang-seg" role="radiogroup" aria-labelledby="langName">
+        <button type="button" id="langIt" class="seg-btn" role="radio" aria-checked="true">IT</button>
+        <button type="button" id="langEn" class="seg-btn" role="radio" aria-checked="false">EN</button>
+      </div>
+    </div>
+    <p class="sheet-note" id="sheetNote">Media e velocità continuano a essere calcolate anche quando nascoste.</p>
+    <p class="sheet-note" id="gpxNote">Con il salvataggio percorso attivo, a RESET TOTALE il tragitto viene salvato come file .gpx nella cartella Download. Per rivederlo su Google Maps: mymaps.google.com → Crea mappa → Importa.</p>
   </section>
 </div>
 
@@ -306,15 +344,25 @@
   const ui = {
     partialM: $('partialM'), totalKm: $('totalKm'), vignetta: $('vignetta'),
     avgSpeed: $('avgSpeed'), nowSpeed: $('nowSpeed'), nowLabel: $('nowLabel'),
+    partialLabel: $('partialLabel'), totalLabel: $('totalLabel'),
+    avgLabel: $('avgLabel'), vignettaLabel: $('vignettaLabel'),
     badge: $('gpsBadge'), dot: $('gpsDot'), banner: $('banner'), toast: $('toast'),
     toggle: $('toggle'), btnPartial: $('resetPartial'), btnTotal: $('resetTotal'),
-    settings: $('settings'), settingsBtn: $('settingsBtn'), closeSettings: $('closeSettings'), showAvg: $('showAvg'), showNow: $('showNow')
+    settings: $('settings'), settingsBtn: $('settingsBtn'), closeSettings: $('closeSettings'), showAvg: $('showAvg'), showNow: $('showNow'),
+    settingsTitle: $('settingsTitle'), showAvgName: $('showAvgName'), showAvgDesc: $('showAvgDesc'),
+    showNowName: $('showNowName'), showNowDesc: $('showNowDesc'), sheetNote: $('sheetNote'),
+    saveTrack: $('saveTrack'), saveTrackName: $('saveTrackName'), saveTrackDesc: $('saveTrackDesc'), gpxNote: $('gpxNote'),
+    exportNow: $('exportNow'),
+    langName: $('langName'), langDesc: $('langDesc'), langIt: $('langIt'), langEn: $('langEn')
   };
 
   const S = {
     tracking:false,
     demo: /(^|[#?&])demo/.test(location.hash + location.search),
-    showAvg:false, showNow:false,
+    lang:'it',
+    showAvg:false, showNow:false, saveTrack:false,
+    track:[],           // punti del percorso registrato (per l'export GPX)
+    lastTrackPt:null,   // ultimo punto scritto nel percorso (deduplica)
     totalKm:0, partialKm:0, vignetta:1,
     moveMs:0, tripStart:null,
     gpsReady:false,
@@ -326,7 +374,7 @@
     accuracy:null,
     gps:'idle',
     watchId:null, demoTimer:null, uiTimer:null, wakeLock:null,
-    bannerTimer:null, bannerClick:null
+    bannerTimer:null, bannerClick:null, bannerKey:null
   };
 
   const MAX_ACC = 30;       // scarta i rilevamenti con precisione peggiore (m)
@@ -336,10 +384,123 @@
   const SPEED_SPAN_MS = 3000; // intervallo minimo per stimare la velocità attuale
   const AVG_KEY = 'tripreg2.showAvg';
   const NOW_KEY = 'tripreg2.showNow';
+  const LANG_KEY = 'tripreg2.lang';
+  const TRACK_KEY = 'tripreg2.saveTrack';
 
-  const nf2 = new Intl.NumberFormat('it-IT',{minimumFractionDigits:2,maximumFractionDigits:2});
-  const nf1 = new Intl.NumberFormat('it-IT',{minimumFractionDigits:1,maximumFractionDigits:1});
-  const nf0 = new Intl.NumberFormat('it-IT',{maximumFractionDigits:0});
+  /* ---------- lingua ---------- */
+
+  const T = {
+    it: {
+      partialLabel:'DISTANZA PARZIALE METRI', totalLabel:'DISTANZA TOTALE KM',
+      avgLabel:'MEDIA', nowLabel:'VELOCITÀ', vignettaLabel:'N° VIGNETTA ROADBOOK',
+      btnPartial:'RESET PARZIALE', btnTotal:'RESET TOTALE',
+      start:'▶  AVVIA', pause:'❚❚  PAUSA', connecting:'GPS · COLLEGAMENTO…',
+      gpsIdle:'GPS —', gpsOk:'GPS ±{a} m', gpsWeak:'GPS debole ±{a} m',
+      gpsWaiting:'GPS in attesa…', gpsError:'GPS non disponibile',
+      bnNoGeo:'Questo browser non supporta la geolocalizzazione.',
+      bnSecure:'La geolocalizzazione richiede una connessione sicura (HTTPS o localhost). Apri l\'app tramite il link https, non con un indirizzo http:// di rete locale.',
+      bnGeoDenied:'Permesso posizione negato. Apri le impostazioni del browser/sito e consenti la posizione, poi ricarica l\'app.',
+      bnGeoOff:'Posizione disattivata sul telefono. Attiva il GPS e riprova.',
+      bnConnecting:'Attendi: collegamento GPS in corso…',
+      bnDemo:'Modalità demo: spostamento simulato, GPS reale disattivato.',
+      bnAskSpeed:'Vuoi visualizzare la velocità e la media? Vai nelle impostazioni in alto a destra ⚙ — tocca qui per aprirle.',
+      tPartialReset:'Parziale azzerato', tPartialZero:'Parziale già a zero',
+      tResetPaused:'Azzerato · media {v} · in pausa', tReset:'Azzerato · media {v}',
+      sTitle:'IMPOSTAZIONI',
+      sShowAvg:'Visualizza media?', sShowAvgDesc:'Mostra la media (km/h)',
+      sShowNow:'Visualizza velocità attuale?', sShowNowDesc:'Mostra la velocità attuale (km/h)',
+      sSaveTrack:'Salvataggio percorso?', sSaveTrackDesc:'Registra il percorso durante il viaggio',
+      sGpxNote:'Il percorso si salva solo con il tasto ESPORTA ORA: il file .gpx finisce nella cartella Download e si apre su Google Maps (mymaps.google.com → Crea mappa → Importa). Il RESET TOTALE azzera tutto senza salvare.',
+      sNote:'Media e velocità continuano a essere calcolate anche quando nascoste.',
+      btnExport:'ESPORTA ORA', tExported:'GPX salvato', tExportEmpty:'Nessun percorso da salvare',
+      sLang:'LINGUA', sLangDesc:'Scegli la lingua dell\'app',
+      ariaSettings:'Impostazioni', ariaClose:'Chiudi'
+    },
+    en: {
+      partialLabel:'PARTIAL DISTANCE METERS', totalLabel:'TOTAL DISTANCE KM',
+      avgLabel:'AVG', nowLabel:'SPEED', vignettaLabel:'ROADBOOK TULIP №',
+      btnPartial:'PARTIAL RESET', btnTotal:'TOTAL RESET',
+      start:'▶  START', pause:'❚❚  PAUSE', connecting:'GPS · CONNECTING…',
+      gpsIdle:'GPS —', gpsOk:'GPS ±{a} m', gpsWeak:'GPS weak ±{a} m',
+      gpsWaiting:'GPS waiting…', gpsError:'GPS unavailable',
+      bnNoGeo:'This browser does not support geolocation.',
+      bnSecure:'Geolocation requires a secure connection (HTTPS or localhost). Open the app with the https link, not a local http:// network address.',
+      bnGeoDenied:'Location permission denied. Open the browser/site settings, allow location, then reload the app.',
+      bnGeoOff:'Location is turned off on the phone. Turn GPS on and try again.',
+      bnConnecting:'Wait: connecting to GPS…',
+      bnDemo:'Demo mode: simulated movement, real GPS disabled.',
+      bnAskSpeed:'Want to see speed and average? Open the settings with the gear at the top right ⚙ — tap here.',
+      tPartialReset:'Partial reset', tPartialZero:'Partial already zero',
+      tResetPaused:'Reset · avg {v} · paused', tReset:'Reset · avg {v}',
+      sTitle:'SETTINGS',
+      sShowAvg:'Show average?', sShowAvgDesc:'Shows the average (km/h)',
+      sShowNow:'Show current speed?', sShowNowDesc:'Shows the current speed (km/h)',
+      sSaveTrack:'Save route?', sSaveTrackDesc:'Records the route while you drive',
+      sGpxNote:'The route is saved only with the EXPORT NOW button: the .gpx file goes to the Downloads folder and opens in Google Maps (mymaps.google.com → Create a map → Import). TOTAL RESET clears everything without saving.',
+      sNote:'Average and speed keep being calculated even when hidden.',
+      btnExport:'EXPORT NOW', tExported:'GPX saved', tExportEmpty:'No route to save yet',
+      sLang:'LANGUAGE', sLangDesc:'Choose the app language',
+      ariaSettings:'Settings', ariaClose:'Close'
+    }
+  };
+
+  // funzione di traduzione: "tr" per non confliggere con la variabile timestamp "t" in onFix/updateSpeed
+  function tr(k){ return (T[S.lang] || T.it)[k] || T.it[k] || ''; }
+
+  function loadLang(){
+    try{ return localStorage.getItem(LANG_KEY) === 'en' ? 'en' : 'it'; }
+    catch(e){ return 'it'; }
+  }
+
+  function setLang(l, save){
+    S.lang = l;
+    if (save){ try{ localStorage.setItem(LANG_KEY, l); }catch(e){} }
+    applyLang();
+    vibrate(25);
+  }
+
+  function applyLang(){
+    document.documentElement.lang = S.lang;
+    ui.partialLabel.textContent  = tr('partialLabel');
+    ui.totalLabel.textContent    = tr('totalLabel');
+    ui.avgLabel.textContent      = tr('avgLabel');
+    ui.nowLabel.textContent      = tr('nowLabel');
+    ui.vignettaLabel.textContent = tr('vignettaLabel');
+    ui.btnPartial.textContent    = tr('btnPartial');
+    ui.btnTotal.textContent      = tr('btnTotal');
+    ui.settingsTitle.textContent = tr('sTitle');
+    ui.showAvgName.textContent   = tr('sShowAvg');
+    ui.showAvgDesc.textContent   = tr('sShowAvgDesc');
+    ui.showNowName.textContent   = tr('sShowNow');
+    ui.showNowDesc.textContent   = tr('sShowNowDesc');
+    ui.saveTrackName.textContent = tr('sSaveTrack');
+    ui.saveTrackDesc.textContent = tr('sSaveTrackDesc');
+    ui.gpxNote.textContent       = tr('sGpxNote');
+    ui.sheetNote.textContent     = tr('sNote');
+    ui.langName.textContent      = tr('sLang');
+    ui.langDesc.textContent      = tr('sLangDesc');
+    ui.settingsBtn.setAttribute('aria-label', tr('ariaSettings'));
+    ui.settingsBtn.setAttribute('title', tr('ariaSettings'));
+    ui.closeSettings.setAttribute('aria-label', tr('ariaClose'));
+    ui.langIt.setAttribute('aria-checked', String(S.lang === 'it'));
+    ui.langEn.setAttribute('aria-checked', String(S.lang === 'en'));
+    ui.exportNow.textContent = tr('btnExport');
+    makeFormatters();
+    updateToggle();  // testo del tasto AVVIA/PAUSA/COLLEGAMENTO
+    setGps(S.gps);   // badge GPS nella lingua corrente
+    // un banner già visibile viene ritradotto senza riavviare il suo timer
+    if (S.bannerKey && !ui.banner.classList.contains('hidden')) ui.banner.textContent = tr(S.bannerKey);
+    render();        // numeri con separatore decimale della lingua
+  }
+
+  /* numeri formattati secondo la lingua (virgola o punto decimale) */
+  let nf2, nf1, nf0;
+  function makeFormatters(){
+    const loc = S.lang === 'en' ? 'en-US' : 'it-IT';
+    nf2 = new Intl.NumberFormat(loc,{minimumFractionDigits:2,maximumFractionDigits:2});
+    nf1 = new Intl.NumberFormat(loc,{minimumFractionDigits:1,maximumFractionDigits:1});
+    nf0 = new Intl.NumberFormat(loc,{maximumFractionDigits:0});
+  }
   const R = 6371008.8; // raggio medio terrestre (m)
 
   function haversine(a,b,c,d){
@@ -358,26 +519,27 @@
 
   function vibrate(ms){ if (navigator.vibrate) try{ navigator.vibrate(ms||35); }catch(e){} }
 
-  function showBanner(msg, ms, onClick){
+  function showBanner(msg, ms, onClick, key){
     ui.banner.textContent = msg;
+    S.bannerKey = key || null;
     ui.banner.classList.toggle('tappable', !!onClick);
     ui.banner.classList.remove('hidden');
     S.bannerClick = onClick || null;
     clearTimeout(S.bannerTimer);
     if (ms) S.bannerTimer = setTimeout(()=>ui.banner.classList.add('hidden'), ms);
   }
-  function hideBanner(){ ui.banner.classList.add('hidden'); }
+  function hideBanner(){ ui.banner.classList.add('hidden'); S.bannerKey = null; }
 
   function setGps(state){
     S.gps = state;
     ui.dot.className = 'dot ' + (state==='ok'?'ok':state==='weak'?'weak':state==='error'?'error':'');
     ui.badge.className = 'badge ' + (state==='ok'?'ok':state==='weak'?'weak':state==='error'?'error':'');
     const a = S.accuracy;
-    if (state==='ok')       ui.badge.textContent = 'GPS ±' + Math.round(a) + ' m';
-    else if (state==='weak')ui.badge.textContent = 'GPS debole ±' + Math.round(a) + ' m';
-    else if (state==='waiting') ui.badge.textContent = 'GPS in attesa…';
-    else if (state==='error')   ui.badge.textContent = 'GPS non disponibile';
-    else                        ui.badge.textContent = 'GPS —';
+    if (state==='ok')       ui.badge.textContent = tr('gpsOk').replace('{a}', Math.round(a));
+    else if (state==='weak')ui.badge.textContent = tr('gpsWeak').replace('{a}', Math.round(a));
+    else if (state==='waiting') ui.badge.textContent = tr('gpsWaiting');
+    else if (state==='error')   ui.badge.textContent = tr('gpsError');
+    else                        ui.badge.textContent = tr('gpsIdle');
   }
 
   /* ---------- distanza ---------- */
@@ -427,15 +589,16 @@
         S.gpsReady = true;
         updateToggle();
         hideBanner();
-        if (!S.demo) showBanner('Vuoi visualizzare la velocità e la media? Vai nelle impostazioni in alto a destra ⚙ — tocca qui per aprirle.', 9000, function(){
+        if (!S.demo) showBanner(tr('bnAskSpeed'), 9000, function(){
           setSettings(true); vibrate(20);
-        });
+        }, 'bnAskSpeed');
         vibrate(30);
       }
 
       // distanze e velocità si accumulano solo durante la registrazione
       if (S.tracking){
         updateSpeed(c.latitude, c.longitude, acc, t);
+        recordTrackPoint(c.latitude, c.longitude, t, c.altitude);
 
         const step = Math.max(MIN_STEP, Math.min(acc*0.5, MAX_STEP));
         if (S.stepLast){
@@ -465,11 +628,11 @@
     if (err.code === 1){
       setGps('error');
       if (S.tracking) stop();
-      showBanner('Permesso posizione negato. Apri le impostazioni del browser/sito e consenti la posizione, poi ricarica l\'app.');
+      showBanner(tr('bnGeoDenied'), 0, null, 'bnGeoDenied');
     } else if (err.code === 2){
       setGps('error');
       if (S.tracking) stop();
-      showBanner('Posizione disattivata sul telefono. Attiva il GPS e riprova.');
+      showBanner(tr('bnGeoOff'), 0, null, 'bnGeoOff');
     } else {
       setGps('weak');
       S.accuracy = null;
@@ -490,8 +653,69 @@
     S.moveMs += 1000;
     S.speed = 41.8;
     S.lastFixAt = Date.now();
+    recordTrackPoint(S.demoPos.lat, S.demoPos.lon, Date.now(), null);
     setGps('ok');
     render();
+  }
+
+  /* ---------- percorso registrato ed export GPX ---------- */
+
+  const TRACK_MIN_M = 5; // distanza minima tra punti salvati: file leggero, forma del percorso intatta
+
+  function recordTrackPoint(lat, lon, t, ele){
+    if (!S.saveTrack || !S.tracking) return;
+    if (S.lastTrackPt){
+      const d = haversine(S.lastTrackPt.lat, S.lastTrackPt.lon, lat, lon);
+      if (d < TRACK_MIN_M) return; // troppo vicino all'ultimo punto: niente file gonfi da fermo
+    }
+    const p = { lat:lat, lon:lon, t:t, ele:(ele != null && isFinite(ele) ? ele : null) };
+    S.track.push(p);
+    S.lastTrackPt = p;
+  }
+
+  function pad2(n){ return String(n).padStart(2,'0'); }
+
+  function trackName(){
+    const d = new Date();
+    return 'Trip Regolarità ' + d.getFullYear() + '-' + pad2(d.getMonth()+1) + '-' + pad2(d.getDate())
+         + ' ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+  }
+
+  function trackFilename(){
+    const d = new Date();
+    return 'trip-regolarita_' + d.getFullYear() + '-' + pad2(d.getMonth()+1) + '-' + pad2(d.getDate())
+         + '_' + pad2(d.getHours()) + pad2(d.getMinutes()) + '.gpx';
+  }
+
+  // GPX 1.1 con un trkseg: si importa su Google Maps (mymaps.google.com → Importa)
+  // e in quasi tutti i navigatori/app di mappa.
+  function buildGpx(){
+    let xml = '<?xml version="1.0" encoding="UTF-8"?>\n'
+      + '<gpx version="1.1" creator="Trip Regolarità 2.0" xmlns="http://www.topografix.com/GPX/1/1">\n'
+      + '  <trk>\n    <name>' + trackName() + '</name>\n    <trkseg>\n';
+    for (const p of S.track){
+      xml += '      <trkpt lat="' + p.lat.toFixed(6) + '" lon="' + p.lon.toFixed(6) + '">';
+      if (p.ele != null) xml += '<ele>' + p.ele.toFixed(1) + '</ele>';
+      xml += '<time>' + new Date(p.t).toISOString() + '</time></trkpt>\n';
+    }
+    xml += '    </trkseg>\n  </trk>\n</gpx>\n';
+    return xml;
+  }
+
+  function exportTrack(){
+    if (!S.saveTrack || S.track.length < 2) return false;
+    try{
+      const blob = new Blob([buildGpx()], {type:'application/gpx+xml'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = trackFilename();
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(()=>{ URL.revokeObjectURL(url); }, 5000);
+      return true;
+    }catch(e){ return false; }
   }
 
   /* ---------- avvio / pausa ---------- */
@@ -513,9 +737,9 @@
     hideBanner();
 
     if (!S.demo){
-      if (!('geolocation' in navigator)){ showBanner('Questo browser non supporta la geolocalizzazione.'); return; }
+      if (!('geolocation' in navigator)){ showBanner(tr('bnNoGeo'), 0, null, 'bnNoGeo'); return; }
       if (!window.isSecureContext){
-        showBanner('La geolocalizzazione richiede una connessione sicura (HTTPS o localhost). Apri l\'app tramite il link https, non con un indirizzo http:// di rete locale.');
+        showBanner(tr('bnSecure'), 0, null, 'bnSecure');
         return;
       }
     }
@@ -558,13 +782,13 @@
 
   function updateToggle(){
     if (!S.demo && !S.gpsReady){
-      ui.toggle.textContent = 'GPS · COLLEGAMENTO…';
+      ui.toggle.textContent = tr('connecting');
       ui.toggle.disabled = true;
       ui.toggle.classList.remove('stop');
       return;
     }
     ui.toggle.disabled = false;
-    ui.toggle.textContent = S.tracking ? '❚❚  PAUSA' : '▶  AVVIA';
+    ui.toggle.textContent = S.tracking ? tr('pause') : tr('start');
     ui.toggle.classList.toggle('stop', S.tracking);
   }
 
@@ -582,6 +806,12 @@
       return v === null ? false : v === '1';
     }catch(e){ return false; }
   }
+  function loadSaveTrack(){
+    try{
+      const v = localStorage.getItem(TRACK_KEY);
+      return v === null ? false : v === '1';
+    }catch(e){ return false; }
+  }
 
   function applySpeedVisibility(){
     const card = document.getElementById('speedCard');
@@ -594,6 +824,11 @@
     }
     if (ui.showAvg) ui.showAvg.checked = S.showAvg;
     if (ui.showNow) ui.showNow.checked = S.showNow;
+  }
+
+  // ESPORTA ORA compare nella barra in basso solo quando il salvataggio percorso è attivo
+  function applyTrackUi(){
+    ui.exportNow.hidden = !S.saveTrack;
   }
 
   function setSettings(open){
@@ -612,12 +847,13 @@
     const had = S.partialKm > 0.0005;
     S.partialKm = 0;
     render(); vibrate(45);
-    toast(had ? 'Parziale azzerato' : 'Parziale già a zero');
+    toast(had ? tr('tPartialReset') : tr('tPartialZero'));
   }
 
   function resetTotal(){
     const wasTracking = S.tracking;
     stop(); // mette in pausa se la registrazione è attiva
+    // NB: il percorso NON viene salvato qui: si esporta solo con il tasto ESPORTA ORA nelle impostazioni
     S.totalKm = 0;
     S.partialKm = 0;
     S.vignetta = 1;
@@ -627,9 +863,11 @@
     S.speed = 0;
     S.win = [];
     S.stepLast = null;
+    S.track = [];
+    S.lastTrackPt = null;
     render();
     vibrate([40,60,40]);
-    toast(wasTracking ? 'Azzerato · media 0,0 · in pausa' : 'Azzerato · media 0,0');
+    toast((wasTracking ? tr('tResetPaused') : tr('tReset')).replace('{v}', nf1.format(0)));
   }
 
   /* ---------- render ---------- */
@@ -677,31 +915,54 @@
     vibrate(25);
   });
 
+  ui.langIt.addEventListener('click', ()=> setLang('it', true));
+  ui.langEn.addEventListener('click', ()=> setLang('en', true));
+
+  ui.saveTrack.addEventListener('change', ()=>{
+    S.saveTrack = ui.saveTrack.checked;
+    try{ localStorage.setItem(TRACK_KEY, S.saveTrack ? '1' : '0'); }catch(e){}
+    applyTrackUi();
+    vibrate(25);
+  });
+
+  // salva una copia del percorso fin qui, senza azzerare il viaggio
+  ui.exportNow.addEventListener('click', ()=>{
+    const ok = exportTrack();
+    vibrate(ok ? 35 : 20);
+    toast(ok ? tr('tExported') : tr('tExportEmpty'));
+  });
+
   document.addEventListener('visibilitychange', ()=>{
     if (document.visibilityState === 'visible') acquireWakeLock();
   });
 
   /* ---------- init ---------- */
 
+  // lingua salvata (italiano se mai scelta) prima di qualsiasi testo a schermo
+  S.lang = loadLang();
+  applyLang();
   updateToggle();
   S.showAvg = loadShowAvg();
   S.showNow = loadShowNow();
+  S.saveTrack = loadSaveTrack();
+  ui.saveTrack.checked = S.saveTrack;
+  applyTrackUi();
   applySpeedVisibility();
   render();
   setGps('idle');
   if (!('geolocation' in navigator)){
-    showBanner('Questo browser non supporta la geolocalizzazione.');
+    showBanner(tr('bnNoGeo'), 0, null, 'bnNoGeo');
   } else if (!window.isSecureContext){
-    showBanner('La geolocalizzazione richiede una connessione sicura (HTTPS o localhost). Apri l\'app tramite il link https, non con un indirizzo http:// di rete locale.');
+    showBanner(tr('bnSecure'), 0, null, 'bnSecure');
   } else {
     if (S.demo){
       S.gpsReady = true;
-      showBanner('Modalità demo: spostamento simulato, GPS reale disattivato.');
+      showBanner(tr('bnDemo'), 0, null, 'bnDemo');
     } else {
       navigator.geolocation.watchPosition(onFix, onErr, {
         enableHighAccuracy:true, maximumAge:1000, timeout:15000
       });
-      showBanner('Attendi: collegamento GPS in corso…');
+      showBanner(tr('bnConnecting'), 0, null, 'bnConnecting');
     }
   }
   updateToggle();
