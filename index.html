@@ -42,7 +42,7 @@
   }
   body{overflow:hidden}
   .wrap{max-width:680px;margin:0 auto;height:100%;
-    padding:8px 14px calc(140px + env(safe-area-inset-bottom));
+    padding:8px 14px calc(158px + env(safe-area-inset-bottom));
     display:flex;flex-direction:column;gap:10px}
   main{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:10px}
   /* le card si ripartiscono l'altezza disponibile: nessuna pagina da scorrere */
@@ -104,6 +104,12 @@
   #partialM,#totalKm,#vignetta{font-size:clamp(34px,min(17vw,11.5vh),92px);color:var(--cyan);text-shadow:0 0 34px rgba(34,211,238,.22)}
   #partialM{color:var(--amber);text-shadow:0 0 34px rgba(251,191,36,.22)}
   #vignetta{color:var(--green);text-shadow:0 0 34px rgba(52,211,153,.22)}
+  /* riga vignetta compatta: libera spazio verticale per le card principali */
+  main > .card.c-count{flex:0 0 auto;flex-direction:row;align-items:center;
+    justify-content:space-between;gap:12px;padding:9px 16px 10px}
+  .c-count .label{margin-bottom:0}
+  .c-count .big{line-height:1}
+  #vignetta{font-size:clamp(26px,min(9vw,6.2vh),46px)}
 
   .speed-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:12px;align-items:end}
   .speed-grid .side{border-left:1px solid #1d3340;padding-left:12px}
@@ -157,9 +163,9 @@
     padding:8px 14px calc(10px + env(safe-area-inset-bottom));
     display:flex;flex-direction:column;gap:8px;
     background:linear-gradient(180deg,rgba(7,10,15,0) 0%,rgba(7,10,15,.94) 42%,#070a0f 100%)}
-  /* tasto archivio tracce GPS: acciaio, sotto/sopra il tasto principale */
-  .btn-tracks{--face-top:#a8b6c6;--face-mid:#7b8ca0;--face-bot:#556577;--edge:#243244;color:#0b141d;
-    min-height:44px;font-size:13.5px;letter-spacing:.18em}
+  /* tasto archivio tracce GPS: stesso formato di AVVIA/STOP, colore acciaio */
+  .btn-tracks{--face-top:#cbd5e1;--face-mid:#94a3b8;--face-bot:#64748b;--edge:#2b3b4d;color:#0b141d;
+    min-height:58px;font-size:18px;letter-spacing:.2em;border-radius:14px}
   .tracks-badge{position:absolute;right:10px;top:50%;transform:translateY(-50%);
     min-width:24px;padding:4px 7px;border-radius:999px;background:#0b1017;color:#dbe4ef;
     border:1px solid #334155;font:700 11px/1 var(--mono);letter-spacing:0;text-align:center}
@@ -168,7 +174,7 @@
   .sticky-action::before{content:'';position:absolute;top:0;left:0;right:0;height:5px;
     background:repeating-linear-gradient(135deg,rgba(239,68,68,.8) 0 16px,rgba(13,17,23,.9) 16px 32px)}
 
-  #toast{position:fixed;left:50%;bottom:calc(148px + env(safe-area-inset-bottom));transform:translate(-50%,26px);
+  #toast{position:fixed;left:50%;bottom:calc(166px + env(safe-area-inset-bottom));transform:translate(-50%,26px);
     background:#e8eef7;color:#0a1017;font:700 13px system-ui,sans-serif;padding:11px 18px;border-radius:999px;
     opacity:0;pointer-events:none;transition:opacity .18s, transform .18s;z-index:20;max-width:88vw;text-align:center}
   #toast.show{opacity:1;transform:translate(-50%,0)}
@@ -190,6 +196,17 @@
     color:#9fb2c8;width:36px;height:36px;border-radius:11px;font:700 15px/1 system-ui,sans-serif;cursor:pointer;
     box-shadow:inset 0 1px 0 rgba(255,255,255,.10),inset 0 -3px 5px rgba(0,0,0,.45),0 3px 0 #060b11,0 5px 8px rgba(0,0,0,.4)}
   .sheet-close:active{transform:translateY(3px);box-shadow:inset 0 2px 5px rgba(0,0,0,.55)}
+  /* pannello TRACCE GPS a tutto schermo */
+  .backdrop.tracks-backdrop{align-items:stretch;padding:0}
+  .sheet-full{width:100%;max-width:none;height:100vh;height:100dvh;
+    max-height:100vh;max-height:100dvh;border:0;border-radius:0;
+    display:flex;flex-direction:column;overflow:hidden;
+    padding:calc(10px + env(safe-area-inset-top)) calc(14px + env(safe-area-inset-right))
+            calc(10px + env(safe-area-inset-bottom)) calc(14px + env(safe-area-inset-left))}
+  .sheet-full .sheet-head{flex:0 0 auto;margin-bottom:10px}
+  .sheet-full .sheet-title{font-size:16px}
+  .sheet-full .track-list{flex:1 1 auto;min-height:0;max-height:none;margin-bottom:8px;padding-right:2px}
+  .sheet-full .sheet-note{flex:0 0 auto;margin:0 0 2px}
   .setting-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 0;cursor:pointer}
   .setting-name{font-family:'Chakra Petch',system-ui,sans-serif;font-weight:700;font-size:15px;letter-spacing:.04em;color:#e8eef7}
   .setting-desc{font-size:12.5px;color:var(--muted);margin-top:3px;line-height:1.35}
@@ -222,19 +239,20 @@
   /* elenco delle tracce GPS salvate */
   .track-list{display:flex;flex-direction:column;gap:8px;margin-bottom:10px;
     max-height:min(52vh,420px);overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
-  .track-item{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  .track-item{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 10px;
     background:#0d141c;border:1px solid #1d2c3a;border-radius:12px;padding:10px 11px}
-  .track-info{min-width:0}
+  .track-info{flex:1 1 130px;min-width:0}
   .track-name{font-family:'Chakra Petch',system-ui,sans-serif;font-weight:700;font-size:13.5px;
     letter-spacing:.03em;color:#e8eef7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .track-meta{font:600 11px/1.35 var(--mono);color:var(--muted);margin-top:3px;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .track-actions{display:flex;gap:6px;flex:0 0 auto}
+  .track-actions{display:flex;gap:6px;flex:0 0 auto;margin-left:auto}
   .mini-btn{appearance:none;-webkit-appearance:none;cursor:pointer;padding:9px 10px;border-radius:9px;
     border:1px solid #2c4052;background:linear-gradient(180deg,#1b2531,#0f1720);color:#cbd5e1;
     font:700 10.5px/1 'Chakra Petch',system-ui,sans-serif;letter-spacing:.08em;
     box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 2px 0 #060b11}
   .mini-btn:active{transform:translateY(2px);box-shadow:inset 0 2px 4px rgba(0,0,0,.5)}
+  .mini-btn.open{color:#6ee7b7;border-color:rgba(52,211,153,.45)}
   .mini-btn.danger{color:#fca5a5;border-color:rgba(248,113,113,.42)}
   .track-empty{padding:16px 6px;text-align:center;color:var(--muted);font-size:12.5px;line-height:1.45}
 
@@ -244,7 +262,7 @@
     .gear{width:37px;height:37px}
     .top-actions{gap:6px}
     .seg-btn{min-width:46px;padding:0 9px;font-size:12px}
-    .btn-tracks{font-size:12.5px}
+    .btn-tracks{font-size:16px;letter-spacing:.16em}
     .mini-btn{padding:8px}
   }
   @media (max-width:380px){
@@ -256,9 +274,9 @@
     .card{padding:8px 14px 10px}
     .btn{min-height:42px}
     .btn-main{min-height:50px}
-    .btn-tracks{min-height:38px;font-size:12.5px}
-    .wrap{gap:8px;padding-bottom:calc(126px + env(safe-area-inset-bottom))}
-    #toast{bottom:calc(134px + env(safe-area-inset-bottom))}
+    .btn-tracks{min-height:50px;font-size:16px}
+    .wrap{gap:8px;padding-bottom:calc(136px + env(safe-area-inset-bottom))}
+    #toast{bottom:calc(146px + env(safe-area-inset-bottom))}
     main{gap:8px}
     .speed-grid{gap:8px}
   }
@@ -363,8 +381,8 @@
   </section>
 </div>
 
-<div id="tracksPanel" class="backdrop hidden" aria-hidden="true">
-  <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="tracksTitle">
+<div id="tracksPanel" class="backdrop tracks-backdrop hidden" aria-hidden="true">
+  <section class="sheet sheet-full" role="dialog" aria-modal="true" aria-labelledby="tracksTitle">
     <div class="sheet-head">
       <div id="tracksTitle" class="sheet-title">TRACCE GPS</div>
       <button id="closeTracks" class="sheet-close" aria-label="Chiudi">✕</button>
@@ -453,14 +471,15 @@
       sShowAvg:'Visualizza media?', sShowAvgDesc:'Mostra la media (km/h)',
       sShowNow:'Visualizza velocità attuale?', sShowNowDesc:'Mostra la velocità attuale (km/h)',
       sSaveTrack:'Registra traccia GPS?', sSaveTrackDesc:'Salva il percorso in Tracce GPS quando premi STOP',
-      sGpxNote:'La traccia parte con AVVIA e viene salvata automaticamente nell\'archivio Tracce GPS quando premi STOP. Apri Tracce GPS per scaricare il file .gpx (Google Maps: mymaps.google.com → Crea mappa → Importa). Chiudendo l\'app la traccia in corso viene recuperata e archiviata; i tratti senza segnale GPS restano separati, senza linee inventate.',
+      sGpxNote:'La traccia parte con AVVIA e viene salvata automaticamente nell\'archivio Tracce GPS quando premi STOP. Apri Tracce GPS per aprire la traccia con GPX Viewer o scaricare il file .gpx (Google Maps: mymaps.google.com → Crea mappa → Importa). Chiudendo l\'app la traccia in corso viene recuperata e archiviata; i tratti senza segnale GPS restano separati, senza linee inventate.',
       sNote:'Media e velocità continuano a essere calcolate anche quando nascoste.',
       sTracks:'TRACCE GPS', btnTracks:'TRACCE GPS',
-      tracksNote:'Le tracce vengono salvate automaticamente quando premi STOP. Tocca SCARICA per ottenere il file .gpx (Google Maps: mymaps.google.com → Crea mappa → Importa).',
+      tracksNote:'Le tracce vengono salvate automaticamente quando premi STOP. APRI la traccia con GPX Viewer, oppure SCARICA il file .gpx (Google Maps: mymaps.google.com → Crea mappa → Importa).',
       tracksEmpty:'Nessuna traccia salvata. Premi AVVIA, poi STOP per salvare il percorso.',
-      tracksPts:'punti', btnDownload:'SCARICA', btnDelete:'ELIMINA',
+      tracksPts:'punti', btnDownload:'SCARICA', btnDelete:'ELIMINA', btnOpen:'APRI',
       tracksConfirmDelete:'Eliminare questa traccia?',
       tTrackSaved:'Traccia salvata in Tracce GPS', tDeleted:'Traccia eliminata',
+      tOpenFallback:'Scegli GPX Viewer per aprire la traccia (.gpx scaricato)',
       sLang:'LINGUA', sLangDesc:'Scegli la lingua dell\'app',
       ariaSettings:'Impostazioni', ariaClose:'Chiudi'
     },
@@ -484,14 +503,15 @@
       sShowAvg:'Show average?', sShowAvgDesc:'Shows the average (km/h)',
       sShowNow:'Show current speed?', sShowNowDesc:'Shows the current speed (km/h)',
       sSaveTrack:'Record GPS track?', sSaveTrackDesc:'Saves the route in GPS Tracks when you press STOP',
-      sGpxNote:'The track starts with START and is automatically saved in the GPS Tracks archive when you press STOP. Open GPS Tracks to download the .gpx file (Google Maps: mymaps.google.com → Create a map → Import). If the app closes, the track in progress is recovered and archived; stretches without GPS signal stay separate, with no invented straight lines.',
+      sGpxNote:'The track starts with START and is automatically saved in the GPS Tracks archive when you press STOP. Open GPS Tracks to open the track with GPX Viewer or download the .gpx file (Google Maps: mymaps.google.com → Create a map → Import). If the app closes, the track in progress is recovered and archived; stretches without GPS signal stay separate, with no invented straight lines.',
       sNote:'Average and speed keep being calculated even when hidden.',
       sTracks:'GPS TRACKS', btnTracks:'GPS TRACKS',
-      tracksNote:'Tracks are saved automatically when you press STOP. Tap DOWNLOAD to get the .gpx file (Google Maps: mymaps.google.com → Create a map → Import).',
+      tracksNote:'Tracks are saved automatically when you press STOP. OPEN the track with GPX Viewer, or DOWNLOAD the .gpx file (Google Maps: mymaps.google.com → Create a map → Import).',
       tracksEmpty:'No saved tracks. Press START, then STOP to save the route.',
-      tracksPts:'points', btnDownload:'DOWNLOAD', btnDelete:'DELETE',
+      tracksPts:'points', btnDownload:'DOWNLOAD', btnDelete:'DELETE', btnOpen:'OPEN',
       tracksConfirmDelete:'Delete this track?',
       tTrackSaved:'Track saved in GPS Tracks', tDeleted:'Track deleted',
+      tOpenFallback:'Choose GPX Viewer to open the track (.gpx downloaded)',
       sLang:'LANGUAGE', sLangDesc:'Choose the app language',
       ariaSettings:'Settings', ariaClose:'Close'
     }
@@ -990,6 +1010,29 @@
     }catch(e){}
   }
 
+  // apre la traccia in un'app esterna (GPX Viewer) passando il file al sistema
+  async function openGpx(rec){
+    const filename = rec.filename || trackFilename(rec.start);
+    let file = null;
+    try{ file = new File([rec.gpx], filename, {type:'application/gpx+xml'}); }catch(e){ file = null; }
+    let shareable = false;
+    try{
+      shareable = !!(file && navigator.share && navigator.canShare && navigator.canShare({files:[file]}));
+    }catch(e){ shareable = false; }
+    if (shareable){
+      try{
+        await navigator.share({ files:[file], title: trackLabel(rec.start) });
+        vibrate(20);
+        return;
+      }catch(e){
+        if (e && e.name === 'AbortError') return;   // condivisione annullata
+      }
+    }
+    // niente condivisione file: scarica il .gpx e indica come aprirlo
+    downloadGpx(rec);
+    toast(tr('tOpenFallback'));
+  }
+
   async function refreshTracks(){
     try{ tracksCache = (await archiveAll()).sort((a,b)=>(b.start||0)-(a.start||0)); }
     catch(e){ tracksCache = []; }
@@ -1038,6 +1081,12 @@
       const actions = document.createElement('div');
       actions.className = 'track-actions';
 
+      const op = document.createElement('button');
+      op.type = 'button';
+      op.className = 'mini-btn open';
+      op.textContent = tr('btnOpen');
+      op.addEventListener('click', ()=>{ openGpx(rec); });
+
       const dl = document.createElement('button');
       dl.type = 'button';
       dl.className = 'mini-btn';
@@ -1050,6 +1099,7 @@
       del.textContent = tr('btnDelete');
       del.addEventListener('click', ()=> deleteTrack(rec));
 
+      actions.appendChild(op);
       actions.appendChild(dl);
       actions.appendChild(del);
       item.appendChild(info);
