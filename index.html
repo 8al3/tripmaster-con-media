@@ -42,7 +42,7 @@
   }
   body{overflow:hidden}
   .wrap{max-width:680px;margin:0 auto;height:100%;
-    padding:8px 14px calc(88px + env(safe-area-inset-bottom));
+    padding:8px 14px calc(140px + env(safe-area-inset-bottom));
     display:flex;flex-direction:column;gap:10px}
   main{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:10px}
   /* le card si ripartiscono l'altezza disponibile: nessuna pagina da scorrere */
@@ -155,16 +155,20 @@
 
   .sticky-action{position:fixed;left:50%;transform:translateX(-50%);bottom:0;width:100%;max-width:680px;z-index:6;
     padding:8px 14px calc(10px + env(safe-area-inset-bottom));
+    display:flex;flex-direction:column;gap:8px;
     background:linear-gradient(180deg,rgba(7,10,15,0) 0%,rgba(7,10,15,.94) 42%,#070a0f 100%)}
-  /* tasto esporta-percorso nel pannello impostazioni: verde "conferma", visibile solo con l'opzione attiva */
-  .btn-export{--face-top:#a7f3d0;--face-mid:#34d399;--face-bot:#059669;--edge:#065f46;color:#03261d;
-    margin-top:12px;min-height:52px;font-size:15px;letter-spacing:.14em}
-  .btn-export[hidden]{display:none}
+  /* tasto archivio tracce GPS: acciaio, sotto/sopra il tasto principale */
+  .btn-tracks{--face-top:#a8b6c6;--face-mid:#7b8ca0;--face-bot:#556577;--edge:#243244;color:#0b141d;
+    min-height:44px;font-size:13.5px;letter-spacing:.18em}
+  .tracks-badge{position:absolute;right:10px;top:50%;transform:translateY(-50%);
+    min-width:24px;padding:4px 7px;border-radius:999px;background:#0b1017;color:#dbe4ef;
+    border:1px solid #334155;font:700 11px/1 var(--mono);letter-spacing:0;text-align:center}
+  .tracks-badge.hidden{display:none}
   /* nastro cauzione sopra il pulsante AVVIA */
   .sticky-action::before{content:'';position:absolute;top:0;left:0;right:0;height:5px;
     background:repeating-linear-gradient(135deg,rgba(239,68,68,.8) 0 16px,rgba(13,17,23,.9) 16px 32px)}
 
-  #toast{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom));transform:translate(-50%,26px);
+  #toast{position:fixed;left:50%;bottom:calc(148px + env(safe-area-inset-bottom));transform:translate(-50%,26px);
     background:#e8eef7;color:#0a1017;font:700 13px system-ui,sans-serif;padding:11px 18px;border-radius:999px;
     opacity:0;pointer-events:none;transition:opacity .18s, transform .18s;z-index:20;max-width:88vw;text-align:center}
   #toast.show{opacity:1;transform:translate(-50%,0)}
@@ -175,7 +179,8 @@
     background:rgba(3,6,10,.62);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);
     overscroll-behavior:contain}
   .backdrop.hidden{display:none}
-  .sheet{width:100%;max-width:680px;background:linear-gradient(180deg,#111a25,#0c1219);
+  .sheet{width:100%;max-width:680px;max-height:calc(100dvh - 28px);overflow-y:auto;
+    background:linear-gradient(180deg,#111a25,#0c1219);
     border:1px solid #1d3a48;border-radius:20px;padding:16px 16px 14px;
     box-shadow:0 20px 50px rgba(0,0,0,.55);animation:sheetIn .18s ease-out}
   @keyframes sheetIn{from{transform:translateY(26px);opacity:.4}to{transform:none;opacity:1}}
@@ -214,13 +219,33 @@
     background:linear-gradient(180deg,#a7f3d0,#34d399 55%,#0d9488);
     box-shadow:inset 0 2px 1px rgba(255,255,255,.5),inset 0 -4px 6px rgba(0,0,0,.22),0 3px 0 #065f46,0 5px 8px rgba(0,0,0,.45)}
 
+  /* elenco delle tracce GPS salvate */
+  .track-list{display:flex;flex-direction:column;gap:8px;margin-bottom:10px;
+    max-height:min(52vh,420px);overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+  .track-item{display:flex;align-items:center;justify-content:space-between;gap:10px;
+    background:#0d141c;border:1px solid #1d2c3a;border-radius:12px;padding:10px 11px}
+  .track-info{min-width:0}
+  .track-name{font-family:'Chakra Petch',system-ui,sans-serif;font-weight:700;font-size:13.5px;
+    letter-spacing:.03em;color:#e8eef7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .track-meta{font:600 11px/1.35 var(--mono);color:var(--muted);margin-top:3px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .track-actions{display:flex;gap:6px;flex:0 0 auto}
+  .mini-btn{appearance:none;-webkit-appearance:none;cursor:pointer;padding:9px 10px;border-radius:9px;
+    border:1px solid #2c4052;background:linear-gradient(180deg,#1b2531,#0f1720);color:#cbd5e1;
+    font:700 10.5px/1 'Chakra Petch',system-ui,sans-serif;letter-spacing:.08em;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 2px 0 #060b11}
+  .mini-btn:active{transform:translateY(2px);box-shadow:inset 0 2px 4px rgba(0,0,0,.5)}
+  .mini-btn.danger{color:#fca5a5;border-color:rgba(248,113,113,.42)}
+  .track-empty{padding:16px 6px;text-align:center;color:var(--muted);font-size:12.5px;line-height:1.45}
+
   @media (max-width:420px){
     .brand{font-size:15px;letter-spacing:.07em}
     .badge{font-size:11px;padding:7px 9px}
     .gear{width:37px;height:37px}
     .top-actions{gap:6px}
     .seg-btn{min-width:46px;padding:0 9px;font-size:12px}
-    .btn-export{font-size:13px}
+    .btn-tracks{font-size:12.5px}
+    .mini-btn{padding:8px}
   }
   @media (max-width:380px){
     .ver{display:none}
@@ -231,8 +256,9 @@
     .card{padding:8px 14px 10px}
     .btn{min-height:42px}
     .btn-main{min-height:50px}
-    .btn-export{min-height:46px}
-    .wrap{gap:8px}
+    .btn-tracks{min-height:38px;font-size:12.5px}
+    .wrap{gap:8px;padding-bottom:calc(126px + env(safe-area-inset-bottom))}
+    #toast{bottom:calc(134px + env(safe-area-inset-bottom))}
     main{gap:8px}
     .speed-grid{gap:8px}
   }
@@ -286,7 +312,10 @@
       <div class="big"><span id="vignetta">0</span></div>
     </section>
 
-    <div class="sticky-action"><button id="toggle" class="btn btn-main">AVVIA</button></div>
+    <div class="sticky-action">
+      <button id="tracksBtn" class="btn btn-tracks" aria-haspopup="dialog" aria-controls="tracksPanel" aria-expanded="false"><span id="tracksLabel">TRACCE GPS</span><span id="tracksCount" class="tracks-badge hidden">0</span></button>
+      <button id="toggle" class="btn btn-main">AVVIA</button>
+    </div>
   </main>
 </div>
 
@@ -314,12 +343,11 @@
     </label>
     <label class="setting-row" for="saveTrack">
       <div class="setting-text">
-        <div class="setting-name" id="saveTrackName">Salvataggio percorso?</div>
-        <div class="setting-desc" id="saveTrackDesc">Registra il percorso da AVVIA a ESPORTA ORA</div>
+        <div class="setting-name" id="saveTrackName">Registra traccia GPS?</div>
+        <div class="setting-desc" id="saveTrackDesc">Salva il percorso in Tracce GPS quando premi STOP</div>
       </div>
       <input type="checkbox" id="saveTrack" class="switch">
     </label>
-    <button type="button" id="exportNow" class="btn btn-export" hidden>ESPORTA ORA</button>
     <div class="setting-row">
       <div class="setting-text">
         <div class="setting-name" id="langName">LINGUA</div>
@@ -331,7 +359,18 @@
       </div>
     </div>
     <p class="sheet-note" id="sheetNote">Media e velocità continuano a essere calcolate anche quando nascoste.</p>
-    <p class="sheet-note" id="gpxNote">La traccia parte con AVVIA e prosegue anche dopo RESET TOTALE; ESPORTA ORA la salva in un file .gpx nella cartella Download (Google Maps: mymaps.google.com → Crea mappa → Importa) e la interrompe. Chiudendo l'app la traccia non viene salvata.</p>
+    <p class="sheet-note" id="gpxNote">La traccia parte con AVVIA e viene salvata automaticamente nell'archivio Tracce GPS quando premi STOP. Apri Tracce GPS per scaricare il file .gpx (Google Maps: mymaps.google.com → Crea mappa → Importa). Chiudendo l'app la traccia in corso viene recuperata e archiviata.</p>
+  </section>
+</div>
+
+<div id="tracksPanel" class="backdrop hidden" aria-hidden="true">
+  <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="tracksTitle">
+    <div class="sheet-head">
+      <div id="tracksTitle" class="sheet-title">TRACCE GPS</div>
+      <button id="closeTracks" class="sheet-close" aria-label="Chiudi">✕</button>
+    </div>
+    <div id="tracksList" class="track-list"></div>
+    <p class="sheet-note" id="tracksNote">Le tracce vengono salvate automaticamente quando premi STOP. Tocca SCARICA per ottenere il file .gpx (Google Maps: mymaps.google.com → Crea mappa → Importa).</p>
   </section>
 </div>
 
@@ -352,7 +391,9 @@
     settingsTitle: $('settingsTitle'), showAvgName: $('showAvgName'), showAvgDesc: $('showAvgDesc'),
     showNowName: $('showNowName'), showNowDesc: $('showNowDesc'), sheetNote: $('sheetNote'),
     saveTrack: $('saveTrack'), saveTrackName: $('saveTrackName'), saveTrackDesc: $('saveTrackDesc'), gpxNote: $('gpxNote'),
-    exportNow: $('exportNow'),
+    tracksBtn: $('tracksBtn'), tracksCount: $('tracksCount'), tracksLabel: $('tracksLabel'),
+    tracksPanel: $('tracksPanel'), closeTracks: $('closeTracks'), tracksTitle: $('tracksTitle'),
+    tracksList: $('tracksList'), tracksNote: $('tracksNote'),
     langName: $('langName'), langDesc: $('langDesc'), langIt: $('langIt'), langEn: $('langEn')
   };
 
@@ -363,7 +404,7 @@
     showAvg:false, showNow:false, saveTrack:false,
     track:[],           // punti del percorso registrato (per l'export GPX)
     lastTrackPt:null,   // ultimo punto scritto nel percorso (deduplica)
-    trackOn:false,      // registrazione della traccia in corso: parte con AVVIA, si chiude con ESPORTA ORA
+    trackOn:false,      // registrazione della traccia in corso: parte con AVVIA, si chiude con STOP
     trackStart:null,    // istante di partenza della traccia (usato nel nome del file GPX)
     totalKm:0, partialKm:0, vignetta:1,
     moveMs:0, tripStart:null,
@@ -396,7 +437,7 @@
       partialLabel:'DISTANZA PARZIALE METRI', totalLabel:'DISTANZA TOTALE KM',
       avgLabel:'MEDIA', nowLabel:'VELOCITÀ', vignettaLabel:'N° VIGNETTA ROADBOOK',
       btnPartial:'RESET PARZIALE', btnTotal:'RESET TOTALE',
-      start:'▶  AVVIA', pause:'❚❚  PAUSA', connecting:'GPS · COLLEGAMENTO…',
+      start:'▶  AVVIA', pause:'■  STOP', connecting:'GPS · COLLEGAMENTO…',
       gpsIdle:'GPS —', gpsOk:'GPS ±{a} m', gpsWeak:'GPS debole ±{a} m',
       gpsWaiting:'GPS in attesa…', gpsError:'GPS non disponibile',
       bnNoGeo:'Questo browser non supporta la geolocalizzazione.',
@@ -407,14 +448,19 @@
       bnDemo:'Modalità demo: spostamento simulato, GPS reale disattivato.',
       bnAskSpeed:'Vuoi visualizzare la velocità e la media? Vai nelle impostazioni in alto a destra ⚙ — tocca qui per aprirle.',
       tPartialReset:'Parziale azzerato', tPartialZero:'Parziale già a zero',
-      tResetPaused:'Azzerato · media {v} · in pausa', tReset:'Azzerato · media {v}',
+      tResetPaused:'Azzerato · media {v} · fermo', tReset:'Azzerato · media {v}',
       sTitle:'IMPOSTAZIONI',
       sShowAvg:'Visualizza media?', sShowAvgDesc:'Mostra la media (km/h)',
       sShowNow:'Visualizza velocità attuale?', sShowNowDesc:'Mostra la velocità attuale (km/h)',
-      sSaveTrack:'Salvataggio percorso?', sSaveTrackDesc:'Registra il percorso da AVVIA a ESPORTA ORA',
-      sGpxNote:'La traccia parte con AVVIA e prosegue anche dopo RESET TOTALE; ESPORTA ORA la salva in un file .gpx nella cartella Download (Google Maps: mymaps.google.com → Crea mappa → Importa) e la interrompe. La traccia è conservata sul telefono anche se l\'app si chiude; i tratti senza segnale GPS restano separati, senza linee inventate.',
+      sSaveTrack:'Registra traccia GPS?', sSaveTrackDesc:'Salva il percorso in Tracce GPS quando premi STOP',
+      sGpxNote:'La traccia parte con AVVIA e viene salvata automaticamente nell\'archivio Tracce GPS quando premi STOP. Apri Tracce GPS per scaricare il file .gpx (Google Maps: mymaps.google.com → Crea mappa → Importa). Chiudendo l\'app la traccia in corso viene recuperata e archiviata; i tratti senza segnale GPS restano separati, senza linee inventate.',
       sNote:'Media e velocità continuano a essere calcolate anche quando nascoste.',
-      btnExport:'ESPORTA ORA', tExported:'GPX salvato', tExportEmpty:'Nessun percorso da salvare',
+      sTracks:'TRACCE GPS', btnTracks:'TRACCE GPS',
+      tracksNote:'Le tracce vengono salvate automaticamente quando premi STOP. Tocca SCARICA per ottenere il file .gpx (Google Maps: mymaps.google.com → Crea mappa → Importa).',
+      tracksEmpty:'Nessuna traccia salvata. Premi AVVIA, poi STOP per salvare il percorso.',
+      tracksPts:'punti', btnDownload:'SCARICA', btnDelete:'ELIMINA',
+      tracksConfirmDelete:'Eliminare questa traccia?',
+      tTrackSaved:'Traccia salvata in Tracce GPS', tDeleted:'Traccia eliminata',
       sLang:'LINGUA', sLangDesc:'Scegli la lingua dell\'app',
       ariaSettings:'Impostazioni', ariaClose:'Chiudi'
     },
@@ -422,7 +468,7 @@
       partialLabel:'PARTIAL DISTANCE METERS', totalLabel:'TOTAL DISTANCE KM',
       avgLabel:'AVG', nowLabel:'SPEED', vignettaLabel:'ROADBOOK TULIP №',
       btnPartial:'PARTIAL RESET', btnTotal:'TOTAL RESET',
-      start:'▶  START', pause:'❚❚  PAUSE', connecting:'GPS · CONNECTING…',
+      start:'▶  START', pause:'■  STOP', connecting:'GPS · CONNECTING…',
       gpsIdle:'GPS —', gpsOk:'GPS ±{a} m', gpsWeak:'GPS weak ±{a} m',
       gpsWaiting:'GPS waiting…', gpsError:'GPS unavailable',
       bnNoGeo:'This browser does not support geolocation.',
@@ -433,14 +479,19 @@
       bnDemo:'Demo mode: simulated movement, real GPS disabled.',
       bnAskSpeed:'Want to see speed and average? Open the settings with the gear at the top right ⚙ — tap here.',
       tPartialReset:'Partial reset', tPartialZero:'Partial already zero',
-      tResetPaused:'Reset · avg {v} · paused', tReset:'Reset · avg {v}',
+      tResetPaused:'Reset · avg {v} · stopped', tReset:'Reset · avg {v}',
       sTitle:'SETTINGS',
       sShowAvg:'Show average?', sShowAvgDesc:'Shows the average (km/h)',
       sShowNow:'Show current speed?', sShowNowDesc:'Shows the current speed (km/h)',
-      sSaveTrack:'Save route?', sSaveTrackDesc:'Records the route from START to EXPORT NOW',
-      sGpxNote:'The track starts with START and keeps going even after TOTAL RESET; EXPORT NOW saves it to a .gpx file in the Downloads folder (Google Maps: mymaps.google.com → Create a map → Import) and stops it. The route is kept on the phone even if the app closes; stretches without GPS signal stay separate, with no invented straight lines.',
+      sSaveTrack:'Record GPS track?', sSaveTrackDesc:'Saves the route in GPS Tracks when you press STOP',
+      sGpxNote:'The track starts with START and is automatically saved in the GPS Tracks archive when you press STOP. Open GPS Tracks to download the .gpx file (Google Maps: mymaps.google.com → Create a map → Import). If the app closes, the track in progress is recovered and archived; stretches without GPS signal stay separate, with no invented straight lines.',
       sNote:'Average and speed keep being calculated even when hidden.',
-      btnExport:'EXPORT NOW', tExported:'GPX saved', tExportEmpty:'No route to save yet',
+      sTracks:'GPS TRACKS', btnTracks:'GPS TRACKS',
+      tracksNote:'Tracks are saved automatically when you press STOP. Tap DOWNLOAD to get the .gpx file (Google Maps: mymaps.google.com → Create a map → Import).',
+      tracksEmpty:'No saved tracks. Press START, then STOP to save the route.',
+      tracksPts:'points', btnDownload:'DOWNLOAD', btnDelete:'DELETE',
+      tracksConfirmDelete:'Delete this track?',
+      tTrackSaved:'Track saved in GPS Tracks', tDeleted:'Track deleted',
       sLang:'LANGUAGE', sLangDesc:'Choose the app language',
       ariaSettings:'Settings', ariaClose:'Close'
     }
@@ -481,18 +532,23 @@
     ui.sheetNote.textContent     = tr('sNote');
     ui.langName.textContent      = tr('sLang');
     ui.langDesc.textContent      = tr('sLangDesc');
+    ui.tracksTitle.textContent   = tr('sTracks');
+    ui.tracksNote.textContent    = tr('tracksNote');
+    ui.tracksBtn.setAttribute('aria-label', tr('sTracks'));
+    ui.closeTracks.setAttribute('aria-label', tr('ariaClose'));
     ui.settingsBtn.setAttribute('aria-label', tr('ariaSettings'));
     ui.settingsBtn.setAttribute('title', tr('ariaSettings'));
     ui.closeSettings.setAttribute('aria-label', tr('ariaClose'));
     ui.langIt.setAttribute('aria-checked', String(S.lang === 'it'));
     ui.langEn.setAttribute('aria-checked', String(S.lang === 'en'));
-    ui.exportNow.textContent = tr('btnExport');
     makeFormatters();
-    updateToggle();  // testo del tasto AVVIA/PAUSA/COLLEGAMENTO
+    updateToggle();  // testo del tasto AVVIA/STOP/COLLEGAMENTO
+    updateTracksLabel();
     setGps(S.gps);   // badge GPS nella lingua corrente
     // un banner già visibile viene ritradotto senza riavviare il suo timer
     if (S.bannerKey && !ui.banner.classList.contains('hidden')) ui.banner.textContent = tr(S.bannerKey);
     render();        // numeri con separatore decimale della lingua
+    if (!ui.tracksPanel.classList.contains('hidden')) renderTracksList();
   }
 
   /* numeri formattati secondo la lingua (virgola o punto decimale) */
@@ -597,8 +653,7 @@
         vibrate(30);
       }
 
-      // la traccia del percorso prosegue anche in pausa o dopo RESET TOTALE:
-      // si interrompe solo con ESPORTA ORA o chiudendo l'app
+      // la traccia del percorso si registra da AVVIA a STOP, quando viene archiviata
       recordTrackPoint(c.latitude, c.longitude, t, c.altitude);
 
       // distanze e velocità si accumulano solo durante la registrazione
@@ -656,7 +711,7 @@
     S.demoPos.lon += Math.cos(Date.now()/15000)*d/111320/120;
     S.accuracy = 4 + Math.random()*3;
     S.lastFixAt = Date.now();
-    // in pausa l'auto continua a muoversi: la traccia prosegue, la distanza no
+    // in pausa (solo demo) l'auto continua a muoversi: la traccia prosegue, la distanza no
     recordTrackPoint(S.demoPos.lat, S.demoPos.lon, Date.now(), null);
     setGps('ok');
     if (S.tracking){
@@ -667,26 +722,108 @@
     render();
   }
 
-  /* ---------- percorso registrato ed export GPX ---------- */
+  /* ---------- percorso registrato, archivio e GPX ---------- */
 
   const TRACK_MIN_M = 5; // distanza minima tra punti salvati: file leggero, forma del percorso intatta
 
-  // ciclo di vita della traccia, indipendente dalla pausa del viaggio:
-  // parte con AVVIA, prosegue dopo RESET TOTALE, si chiude con ESPORTA ORA
+  // ciclo di vita della traccia: parte con AVVIA, si chiude con STOP e viene archiviata
   const TRACK_STORE = 'tripreg2.trackData';
   const TRACK_GAP_MS = 20000;   // fix mancanti oltre questo tempo: nuovo segmento, niente linea retta inventata
   const TRACK_MAX_KMH = 250;    // salto impossibile tra due fix: valore scartato come errore GPS
   let trackSeg = 0, trackLastFix = null, trackPending = null, trackSavedAt = 0;
-  // true = traccia recuperata da una sessione precedente e mai esportata: resta ferma (non riceve
-  // nuovi punti) ed è esportabile; il prossimo AVVIA la sostituisce con una traccia nuova
-  let trackRestored = false;
+
+  /* archivio tracce: IndexedDB (regge tracce lunghe) con riserva su localStorage */
+  const ARCHIVE_DB = 'tripreg2-gps', ARCHIVE_STORE = 'tracks', ARCHIVE_LS = 'tripreg2.trackArchive';
+  let archDb = null, archDbFailed = false, tracksCache = [];
+
+  function archOpen(){
+    if (archDb) return Promise.resolve(archDb);
+    return new Promise((resolve, reject)=>{
+      if (!('indexedDB' in window)){ reject(new Error('no-indexeddb')); return; }
+      let req;
+      try{ req = indexedDB.open(ARCHIVE_DB, 1); }catch(e){ reject(e); return; }
+      req.onupgradeneeded = ()=>{
+        const db = req.result;
+        if (!db.objectStoreNames.contains(ARCHIVE_STORE)){
+          db.createObjectStore(ARCHIVE_STORE, { keyPath:'id', autoIncrement:true });
+        }
+      };
+      req.onsuccess = ()=>{ archDb = req.result; resolve(archDb); };
+      req.onerror = ()=>reject(req.error || new Error('idb'));
+      req.onblocked = ()=>reject(new Error('idb-blocked'));
+    });
+  }
+
+  async function archiveAdd(rec){
+    if (!archDbFailed){
+      try{
+        const db = await archOpen();
+        await new Promise((resolve, reject)=>{
+          const tx = db.transaction(ARCHIVE_STORE, 'readwrite');
+          tx.objectStore(ARCHIVE_STORE).add(rec);
+          tx.oncomplete = ()=>resolve();
+          tx.onerror = ()=>reject(tx.error);
+          tx.onabort = ()=>reject(tx.error);
+        });
+        return true;
+      }catch(e){ archDbFailed = true; archDb = null; }
+    }
+    // riserva: solo le tracce più recenti in localStorage
+    try{
+      const arr = JSON.parse(localStorage.getItem(ARCHIVE_LS) || '[]');
+      rec.id = 'l' + Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+      arr.unshift(rec);
+      localStorage.setItem(ARCHIVE_LS, JSON.stringify(arr.slice(0, 20)));
+      return true;
+    }catch(e){ return false; }
+  }
+
+  async function archiveAll(){
+    let out = [];
+    if (!archDbFailed){
+      try{
+        const db = await archOpen();
+        out = await new Promise((resolve, reject)=>{
+          const tx = db.transaction(ARCHIVE_STORE, 'readonly');
+          const req = tx.objectStore(ARCHIVE_STORE).getAll();
+          req.onsuccess = ()=>resolve(req.result || []);
+          req.onerror = ()=>reject(req.error);
+        });
+      }catch(e){ archDbFailed = true; archDb = null; }
+    }
+    try{
+      const arr = JSON.parse(localStorage.getItem(ARCHIVE_LS) || '[]');
+      if (Array.isArray(arr) && arr.length) out = out.concat(arr);
+    }catch(e){}
+    return out;
+  }
+
+  async function archiveDelete(id){
+    if (typeof id === 'string' && id.charAt(0) === 'l'){
+      try{
+        const arr = JSON.parse(localStorage.getItem(ARCHIVE_LS) || '[]').filter(r=>r.id !== id);
+        localStorage.setItem(ARCHIVE_LS, JSON.stringify(arr));
+      }catch(e){}
+      return;
+    }
+    if (archDbFailed) return;
+    try{
+      const db = await archOpen();
+      await new Promise((resolve, reject)=>{
+        const tx = db.transaction(ARCHIVE_STORE, 'readwrite');
+        tx.objectStore(ARCHIVE_STORE).delete(id);
+        tx.oncomplete = ()=>resolve();
+        tx.onerror = ()=>reject(tx.error);
+      });
+    }catch(e){}
+  }
 
   function beginTrack(){
     S.trackOn = true;
     S.trackStart = Date.now();
     S.track = [];
     S.lastTrackPt = null;
-    trackSeg = 0; trackLastFix = null; trackPending = null; trackRestored = false;
+    trackSeg = 0; trackLastFix = null; trackPending = null;
     persistTrack(true); // sovrascrive subito la copia salvata sul telefono
   }
   // il percorso resta salvato sul dispositivo: se l'app viene chiusa dal sistema non si perde
@@ -702,26 +839,12 @@
       }));
     }catch(e){}
   }
-  function restoreTrack(){
-    try{
-      const d = JSON.parse(localStorage.getItem(TRACK_STORE) || 'null');
-      if (!d || !Array.isArray(d.pts) || !d.pts.length) return false;
-      S.track = d.pts.map(a=>({lat:a[0], lon:a[1], t:a[2], ele:a[3], seg:a[4]}));
-      S.trackStart = d.start || S.track[0].t;
-      S.lastTrackPt = S.track[S.track.length-1];
-      trackSeg = (d.seg || 0) + 1; // dopo la ripresa si apre un nuovo segmento
-      trackLastFix = null; trackPending = null;
-      S.trackOn = true;
-      trackRestored = true;
-      return true;
-    }catch(e){ return false; }
-  }
   function stopTrack(){
     S.trackOn = false;
     S.trackStart = null;
     S.track = [];
     S.lastTrackPt = null;
-    trackPending = null; trackLastFix = null; trackRestored = false;
+    trackPending = null; trackLastFix = null;
     persistTrack(true);
     // niente più punti in arrivo: il timer demo può fermarsi (se il viaggio non è in registrazione)
     if (!S.tracking && S.demoTimer){ clearInterval(S.demoTimer); S.demoTimer = null; }
@@ -730,7 +853,7 @@
   }
 
   function recordTrackPoint(lat, lon, t, ele){
-    if (!S.trackOn || trackRestored) return;
+    if (!S.trackOn) return;
     // fix mancanti a lungo (galleria, schermo spento): il percorso riparte in un nuovo segmento
     if (trackLastFix){
       const dt = t - trackLastFix.t;
@@ -754,27 +877,47 @@
 
   function pad2(n){ return String(n).padStart(2,'0'); }
 
-  function trackName(){
-    const d = new Date(S.trackStart || Date.now());
+  function trackName(ts){
+    const d = new Date(ts || Date.now());
     return 'Trip Regolarità ' + d.getFullYear() + '-' + pad2(d.getMonth()+1) + '-' + pad2(d.getDate())
          + ' ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes());
   }
 
-  function trackFilename(){
-    const d = new Date(S.trackStart || Date.now());
+  function trackFilename(ts){
+    const d = new Date(ts || Date.now());
     return 'trip-regolarita_' + d.getFullYear() + '-' + pad2(d.getMonth()+1) + '-' + pad2(d.getDate())
          + '_' + pad2(d.getHours()) + pad2(d.getMinutes()) + '.gpx';
   }
 
-  // GPX 1.1 con un trkseg: si importa su Google Maps (mymaps.google.com → Importa)
-  // e in quasi tutti i navigatori/app di mappa.
-  function buildGpx(){
-    let xml = '<?xml version="1.0" encoding="UTF-8"?>\n'
-      + '<gpx version="1.1" creator="Trip Regolarità 2.0" xmlns="http://www.topografix.com/GPX/1/1">\n'
-      + '  <trk>\n    <name>' + trackName() + '</name>\n    <trkseg>\n';
-    // l'ultimo fix valido entra sempre, così il file termina dove ci si è davvero fermati
+  function trackLabel(ts){
+    const d = new Date(ts || Date.now());
+    return pad2(d.getDate()) + '/' + pad2(d.getMonth()+1) + '/' + d.getFullYear()
+         + ' · ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+  }
+
+  // punti definitivi della traccia in corso: l'ultimo fix valido entra sempre,
+  // così il file termina dove ci si è davvero fermati
+  function collectPoints(){
     const pts = S.track.slice();
     if (trackPending && pts.length && trackPending.seg === pts[pts.length-1].seg) pts.push(trackPending);
+    return pts;
+  }
+
+  function trackDistanceKm(pts){
+    let m = 0;
+    for (let i=1; i<pts.length; i++){
+      if (pts[i].seg !== pts[i-1].seg) continue;
+      m += haversine(pts[i-1].lat, pts[i-1].lon, pts[i].lat, pts[i].lon);
+    }
+    return m/1000;
+  }
+
+  // GPX 1.1 con più trkseg: si importa su Google Maps (mymaps.google.com → Importa)
+  // e in quasi tutti i navigatori/app di mappa.
+  function buildGpx(pts, startTs){
+    let xml = '<?xml version="1.0" encoding="UTF-8"?>\n'
+      + '<gpx version="1.1" creator="Trip Regolarità 2.0" xmlns="http://www.topografix.com/GPX/1/1">\n'
+      + '  <trk>\n    <name>' + trackName(startTs) + '</name>\n    <trkseg>\n';
     let seg = pts.length ? pts[0].seg : 0;
     for (const p of pts){
       if (p.seg !== seg){ xml += '    </trkseg>\n    <trkseg>\n'; seg = p.seg; }
@@ -786,23 +929,144 @@
     return xml;
   }
 
-  function exportTrack(){
-    if (!S.saveTrack || S.track.length < 2) return false;
+  // STOP: chiude la registrazione della traccia e la salva nell'archivio Tracce GPS
+  function finishTrack(){
+    if (!S.trackOn) return;
+    const pts = collectPoints();
+    const start = S.trackStart || (pts.length ? pts[0].t : Date.now());
+    const end = pts.length ? pts[pts.length-1].t : Date.now();
+    const rec = pts.length >= 2 ? {
+      name: trackName(start),
+      filename: trackFilename(start),
+      start: start,
+      end: end,
+      points: pts.length,
+      distanceKm: trackDistanceKm(pts),
+      gpx: buildGpx(pts, start),
+      savedAt: Date.now()
+    } : null;
+    stopTrack(); // svuota la traccia in corso e la copia temporanea
+    if (!rec) return;
+    archiveAdd(rec).then(ok=>{
+      if (!ok) return;
+      toast(tr('tTrackSaved'));
+      refreshTracks();
+    });
+  }
+
+  // traccia rimasta da una sessione chiusa senza STOP: la si archivia all'avvio
+  async function recoverTrack(){
+    let d = null;
+    try{ d = JSON.parse(localStorage.getItem(TRACK_STORE) || 'null'); }catch(e){ d = null; }
+    try{ localStorage.removeItem(TRACK_STORE); }catch(e){}
+    if (!d || !Array.isArray(d.pts) || d.pts.length < 2) return;
+    const pts = d.pts.map(a=>({lat:a[0], lon:a[1], t:a[2], ele:a[3], seg:a[4]}));
+    const start = d.start || pts[0].t;
+    await archiveAdd({
+      name: trackName(start),
+      filename: trackFilename(start),
+      start: start,
+      end: pts[pts.length-1].t,
+      points: pts.length,
+      distanceKm: trackDistanceKm(pts),
+      gpx: buildGpx(pts, start),
+      savedAt: Date.now(),
+      recovered: true
+    });
+    refreshTracks();
+  }
+
+  function downloadGpx(rec){
     try{
-      const blob = new Blob([buildGpx()], {type:'application/gpx+xml'});
+      const blob = new Blob([rec.gpx], {type:'application/gpx+xml'});
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = trackFilename();
+      a.download = rec.filename || trackFilename(rec.start);
       document.body.appendChild(a);
       a.click();
       a.remove();
       setTimeout(()=>{ URL.revokeObjectURL(url); }, 5000);
-      return true;
-    }catch(e){ return false; }
+    }catch(e){}
   }
 
-  /* ---------- avvio / pausa ---------- */
+  async function refreshTracks(){
+    try{ tracksCache = (await archiveAll()).sort((a,b)=>(b.start||0)-(a.start||0)); }
+    catch(e){ tracksCache = []; }
+    updateTracksLabel();
+    if (!ui.tracksPanel.classList.contains('hidden')) renderTracksList();
+  }
+
+  function updateTracksLabel(){
+    ui.tracksLabel.textContent = tr('btnTracks');
+    const n = tracksCache.length;
+    ui.tracksCount.textContent = String(n);
+    ui.tracksCount.classList.toggle('hidden', n === 0);
+  }
+
+  function trackMeta(rec){
+    const km = nf2.format(rec.distanceKm || 0);
+    const pts = nf0.format(rec.points || 0);
+    const mins = Math.max(0, Math.round(((rec.end || 0) - (rec.start || 0)) / 60000));
+    return km + ' km · ' + pts + ' ' + tr('tracksPts') + ' · ' + mins + ' min';
+  }
+
+  function renderTracksList(){
+    ui.tracksList.innerHTML = '';
+    if (!tracksCache.length){
+      const empty = document.createElement('div');
+      empty.className = 'track-empty';
+      empty.textContent = tr('tracksEmpty');
+      ui.tracksList.appendChild(empty);
+      return;
+    }
+    tracksCache.forEach(rec=>{
+      const item = document.createElement('div');
+      item.className = 'track-item';
+
+      const info = document.createElement('div');
+      info.className = 'track-info';
+      const name = document.createElement('div');
+      name.className = 'track-name';
+      name.textContent = trackLabel(rec.start);
+      const meta = document.createElement('div');
+      meta.className = 'track-meta';
+      meta.textContent = trackMeta(rec);
+      info.appendChild(name);
+      info.appendChild(meta);
+
+      const actions = document.createElement('div');
+      actions.className = 'track-actions';
+
+      const dl = document.createElement('button');
+      dl.type = 'button';
+      dl.className = 'mini-btn';
+      dl.textContent = tr('btnDownload');
+      dl.addEventListener('click', ()=>{ downloadGpx(rec); vibrate(20); });
+
+      const del = document.createElement('button');
+      del.type = 'button';
+      del.className = 'mini-btn danger';
+      del.textContent = tr('btnDelete');
+      del.addEventListener('click', ()=> deleteTrack(rec));
+
+      actions.appendChild(dl);
+      actions.appendChild(del);
+      item.appendChild(info);
+      item.appendChild(actions);
+      ui.tracksList.appendChild(item);
+    });
+  }
+
+  async function deleteTrack(rec){
+    if (!window.confirm(tr('tracksConfirmDelete'))) return;
+    await archiveDelete(rec.id);
+    vibrate(25);
+    toast(tr('tDeleted'));
+    refreshTracks();
+  }
+
+  /* ---------- avvio / stop ---------- */
 
   async function acquireWakeLock(){
     try{
@@ -830,10 +1094,8 @@
 
     S.tracking = true;
     if (S.tripStart === null) S.tripStart = Date.now();
-    // con il salvataggio percorso attivo la traccia parte insieme al viaggio;
-    // se già in registrazione (es. dopo un RESET TOTALE) prosegue senza ricominciare
-    // (una traccia recuperata e non esportata viene sostituita da quella nuova)
-    if (S.saveTrack && (!S.trackOn || trackRestored)) beginTrack();
+    // con la registrazione traccia attiva, la traccia parte insieme al viaggio
+    if (S.saveTrack && !S.trackOn) beginTrack();
     S.stepLast = null;
     S.win = [];
     S.speed = 0;
@@ -857,17 +1119,18 @@
   function stop(){
     if (!S.tracking) return;
     S.tracking = false;
-    // il timer demo resta attivo se la traccia prosegue anche in pausa
+    // il timer demo può restare attivo finché la traccia non viene chiusa (finishTrack)
     if (S.demoTimer && !S.trackOn){ clearInterval(S.demoTimer); S.demoTimer = null; }
-    // il timer UI resta attivo per aggiornare la media anche in pausa/fermo
+    // il timer UI resta attivo per aggiornare la media anche da fermo
     S.stepLast = null;
     S.win = [];
     S.speed = 0;
-    // con la traccia ancora in registrazione lo schermo resta acceso: il GPS deve continuare a fissare punti
-    if (!S.trackOn) releaseWakeLock();
     updateToggle();
     setGps('idle');
     render();
+    // STOP chiude la registrazione del percorso e lo archivia in Tracce GPS
+    finishTrack();
+    if (!S.trackOn) releaseWakeLock();
   }
 
   function updateToggle(){
@@ -899,8 +1162,8 @@
   function loadSaveTrack(){
     try{
       const v = localStorage.getItem(TRACK_KEY);
-      return v === null ? false : v === '1';
-    }catch(e){ return false; }
+      return v === null ? true : v === '1'; // attivo di default: è la funzione Tracce GPS
+    }catch(e){ return true; }
   }
 
   function applySpeedVisibility(){
@@ -916,18 +1179,27 @@
     if (ui.showNow) ui.showNow.checked = S.showNow;
   }
 
-  // ESPORTA ORA compare nel pannello impostazioni solo quando il salvataggio percorso è attivo
-  function applyTrackUi(){
-    ui.exportNow.hidden = !S.saveTrack;
+  function syncModal(){
+    const open = !ui.settings.classList.contains('hidden') || !ui.tracksPanel.classList.contains('hidden');
+    document.body.classList.toggle('modal-open', open);
   }
 
   function setSettings(open){
     ui.settings.classList.toggle('hidden', !open);
     ui.settings.setAttribute('aria-hidden', open ? 'false' : 'true');
     ui.settingsBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
-    document.body.classList.toggle('modal-open', open);
+    syncModal();
     if (open) ui.closeSettings.focus();
     else if (ui.settings.contains(document.activeElement)) ui.settingsBtn.focus();
+  }
+
+  function setTracks(open){
+    ui.tracksPanel.classList.toggle('hidden', !open);
+    ui.tracksPanel.setAttribute('aria-hidden', open ? 'false' : 'true');
+    ui.tracksBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    syncModal();
+    if (open){ refreshTracks(); ui.closeTracks.focus(); }
+    else if (ui.tracksPanel.contains(document.activeElement)) ui.tracksBtn.focus();
   }
 
   /* ---------- reset ---------- */
@@ -942,9 +1214,8 @@
 
   function resetTotal(){
     const wasTracking = S.tracking;
-    stop(); // mette in pausa se la registrazione è attiva
-    // NB: la traccia del percorso NON viene toccata: la registrazione prosegue anche dopo il
-    // reset e si chiude solo con ESPORTA ORA (o chiudendo l'app, senza salvare)
+    stop(); // ferma la registrazione e archivia la traccia in Tracce GPS
+    // NB: la traccia del percorso viene chiusa e salvata da stop(), non azzerata qui
     S.totalKm = 0;
     S.partialKm = 0;
     S.vignetta = 1;
@@ -988,7 +1259,12 @@
   ui.settingsBtn.addEventListener('click', ()=> setSettings(true));
   ui.closeSettings.addEventListener('click', ()=> setSettings(false));
   ui.settings.addEventListener('click', (e)=>{ if (e.target === ui.settings) setSettings(false); });
-  document.addEventListener('keydown', (e)=>{ if (e.key === 'Escape') setSettings(false); });
+  ui.tracksBtn.addEventListener('click', ()=> setTracks(true));
+  ui.closeTracks.addEventListener('click', ()=> setTracks(false));
+  ui.tracksPanel.addEventListener('click', (e)=>{ if (e.target === ui.tracksPanel) setTracks(false); });
+  document.addEventListener('keydown', (e)=>{
+    if (e.key === 'Escape'){ setSettings(false); setTracks(false); }
+  });
   ui.banner.addEventListener('click', ()=>{ if (S.bannerClick) S.bannerClick(); });
 
   ui.showAvg.addEventListener('change', ()=>{
@@ -1014,20 +1290,14 @@
       // opzione attivata con la registrazione in corso: la traccia parte subito
       if (S.tracking && !S.trackOn) beginTrack();
     } else {
-      // opzione disattivata: la traccia si interrompe senza salvare
+      // opzione disattivata: la traccia in corso si interrompe senza salvare
       stopTrack();
     }
-    applyTrackUi();
     vibrate(25);
   });
 
-  // ESPORTA ORA salva il file GPX e chiude la traccia: al prossimo AVVIA ne parte una nuova
-  ui.exportNow.addEventListener('click', ()=>{
-    const ok = exportTrack();
-    if (ok) stopTrack();
-    vibrate(ok ? 35 : 20);
-    toast(ok ? tr('tExported') : tr('tExportEmpty'));
-  });
+  // chiudendo l'app la traccia in corso resta sul telefono e verrà archiviata alla riapertura
+  window.addEventListener('pagehide', ()=> persistTrack(true));
 
   document.addEventListener('visibilitychange', ()=>{
     if (document.visibilityState === 'visible') acquireWakeLock();
@@ -1043,8 +1313,8 @@
   S.showNow = loadShowNow();
   S.saveTrack = loadSaveTrack();
   ui.saveTrack.checked = S.saveTrack;
-  if (S.saveTrack) restoreTrack(); else { try{ localStorage.removeItem(TRACK_STORE); }catch(e){} }
-  applyTrackUi();
+  recoverTrack();   // archivia un'eventuale traccia rimasta da una sessione chiusa senza STOP
+  refreshTracks();  // elenco e contatore per il tasto TRACCE GPS
   applySpeedVisibility();
   render();
   setGps('idle');

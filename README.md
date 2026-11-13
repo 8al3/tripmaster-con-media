@@ -3,13 +3,20 @@
 App web installabile (PWA) per Android che usa il GPS del telefono per misurare lo spostamento
 e la **velocità media di viaggio**.
 
+## Novità della 2.0.4
+
+- **Tasto STOP** al posto di PAUSA: ferma il viaggio **e chiude la registrazione del percorso**.
+- **Tracce GPS**: a ogni STOP il percorso viene salvato automaticamente in un **archivio** consultabile
+  dal nuovo tasto **TRACCE GPS** (sopra AVVIA/STOP). Da lì scarichi il file **GPX** o elimini la traccia.
+- La traccia in corso resta sul telefono: se l'app viene chiusa, alla riapertura viene recuperata e archiviata.
+
 ## Novità della 2.0.3
 
 - **Traccia GPX più fedele**: salvataggio automatico sul telefono, tratti separati dove manca il segnale, scarto dei salti GPS impossibili, ultimo punto sempre incluso.
 
 ## Novità della 2.0
 
-- **Velocità media di viaggio** in km/h, calcolata **escludendo soste e pause**.
+- **Velocità media di viaggio** in km/h, calcolata sul tempo trascorso dal tasto **AVVIA**.
 - **Velocità attuale** in km/h, aggiornata in tempo reale.
 - **Ingranaggio in alto a destra** con le impostazioni: puoi mostrare o nascondere la media e scegliere la
   **lingua** (italiano predefinita o inglese). Le scelte vengono ricordate sul telefono e la media continua a
@@ -20,23 +27,26 @@ e la **velocità media di viaggio**.
 
 - **Distanza parziale** — in **metri**, grande, in alto, con tasto **RESET PARZIALE**.
 - **Distanza totale** — in chilometri, campo separato, con tasto **RESET TOTALE**: azzera totale, parziale e
-  media, imposta **N° Vignetta a 1** e mette in **pausa** la registrazione, senza conferma.
+  media, imposta **N° Vignetta a 1** e mette in **stop** la registrazione (archiviando l'eventuale traccia), senza conferma.
 - **Velocità media di viaggio** — distanza totale diviso il tempo trascorso dal tasto **AVVIA**
-  al **RESET TOTALE**; include anche soste, fermi e pause.
+  al **RESET TOTALE**; include anche soste e fermi.
 - **Velocità attuale** — stima su una finestra di alcuni secondi, filtrata per non seguire il rumore del GPS.
 - **Impostazioni** — tocca l'ingranaggio in alto a destra per mostrare/nascondere media e velocità attuale
   e per scegliere la **lingua** dell'interfaccia (italiano/inglese, italiano predefinita). I numeri seguono
   il formato della lingua scelta (0,00 km / 0.00 km).
-- **Salvataggio percorso (opzionale)** — attiva **"Salvataggio percorso?"** nelle impostazioni: con **AVVIA**
-  parte anche la registrazione della traccia, che **prosegue anche dopo RESET TOTALE** (il reset azzera solo
-  i conteggi del viaggio, non la traccia) e resta attiva anche in pausa. Per salvarla apri le impostazioni e
-  premi **ESPORTA ORA**: il file **GPX** finisce nella cartella Download e la registrazione della traccia si
-  chiude lì (al prossimo **AVVIA** ne parte una nuova). La traccia viene conservata sul telefono (si ripristina se l'app viene chiusa dal sistema) finché non premi **ESPORTA ORA**. Dopo una chiusura non esportata, riaprendo l'app la traccia recuperata resta ferma ed è esportabile dalle impostazioni; il prossimo **AVVIA** la **sostituisce** con una traccia nuova. Se il GPS resta senza segnale per più di 20 s si apre un nuovo tratto (<trkseg>) invece di una linea retta, i salti GPS impossibili (> 250 km/h) vengono scartati e l'ultimo punto valido entra sempre nel file.
-  Per rivederla su **Google Maps**: apri *mymaps.google.com* → *Crea mappa* → *Importa* e scegli il file
-  (il GPX si apre anche in molte altre app di mappe e navigatori).
+- **Registrazione traccia GPS (attiva di default)** — l'opzione **"Registra traccia GPS?"** nelle impostazioni
+  controlla la registrazione del percorso: con **AVVIA** parte la traccia, con **STOP** la registrazione si chiude
+  e il file **GPX** viene salvato nell'**archivio Tracce GPS**. Apri il tasto **TRACCE GPS** (sopra AVVIA/STOP) per
+  vedere l'elenco delle tracce salvate: per ognuna puoi **SCARICA** il file `.gpx` (nella cartella Download) oppure
+  **ELIMINA** la traccia. Ogni traccia mostra data/ora, distanza, numero di punti e durata.
+  La traccia in corso viene conservata sul telefono: se l'app viene chiusa dal sistema, alla riapertura viene
+  recuperata e archiviata. Se il GPS resta senza segnale per più di 20 s si apre un nuovo tratto (`<trkseg>`)
+  invece di una linea retta, i salti GPS impossibili (> 250 km/h) vengono scartati e l'ultimo punto valido entra
+  sempre nel file. Per rivederla su **Google Maps**: apri *mymaps.google.com* → *Crea mappa* → *Importa* e scegli
+  il file (il GPX si apre anche in molte altre app di mappe e navigatori).
 - **N° Vignetta** — conta quante volte è stato premuto **RESET PARZIALE**, parte da **1** e si riporta a 1
   con **RESET TOTALE**.
-- **AVVIA / PAUSA** sempre visibile in basso (barra fissa).
+- **AVVIA / STOP** sempre visibile in basso (barra fissa), con il tasto **TRACCE GPS** sopra.
 - **All'avvio si riparte da zero**: 0 m, 0,00 km, media 0,0 km/h e N° Vignetta 1
   (nessun dato precedente viene recuperato).
 - **Schermo sempre accesso** durante la registrazione (Wake Lock, dove supportato).
@@ -77,7 +87,7 @@ Poi apri `http://localhost:8010` sul telefono: `localhost` è considerato sicuro
 - Un rilevamento viene usato solo se la sua accuratezza è migliore di **±30 m** (costante `MAX_ACC`).
 - Uno spostamento viene sommato solo se supera `max(2,5 m, 50% dell'accuratezza)`: evita che il "rumore"
   del GPS gonfi la distanza da fermo.
-- **Tempo di viaggio**: calcolato dal tasto **AVVIA** fino al **RESET TOTALE**, include soste, fermi e pause.
+- **Tempo di viaggio**: calcolato dal tasto **AVVIA** fino al **RESET TOTALE**, include soste e fermi.
 - **Media di viaggio** = `distanza totale ÷ tempo trascorso (AVVIA → RESET TOTALE)`.
 - **Velocità attuale**: distanza tra la posizione più vecchia (circa 3 secondi fa) e quella attuale, divisa
   per il tempo trascorso; il valore viene smussato e portato a 0 quando il movimento è trascurabile.
