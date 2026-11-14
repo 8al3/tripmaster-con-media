@@ -17,6 +17,9 @@ e la **velocità media di viaggio**.
   configurare. Comandi: **zoom + / −**, **trascinamento** con un dito e tasto per **inquadrare tutto il percorso**.
   Le mappe vengono servite dalla rete: **senza connessione** l'anteprima ripiega da sola sulla griglia scura e la
   traccia resta perfettamente visibile.
+- **Tasto home nell'archivio**: in alto a destra, accanto alla ✕, riporta subito alla schermata principale.
+- **Tasto indietro di Android**: con un pannello aperto lo chiude e torna alla home; sulla home il primo tocco mostra
+  l'avviso *"Premi di nuovo indietro per uscire"*, il secondo tocco (entro circa 2 secondi) chiude l'app.
 - La card **N° vignetta roadbook** è stata compattata su una riga per liberare spazio verticale.
 - La traccia in corso resta sul telefono: se l'app viene chiusa, alla riapertura viene recuperata e archiviata.
 
@@ -53,7 +56,10 @@ e la **velocità media di viaggio**.
   distanza, durata, punti e media; **zoom + / −**, **trascinamento** con un dito e tasto per **inquadrare tutto
   il percorso**; senza connessione resta la griglia scura con la traccia, nessuna app esterna necessaria),
   **SCARICA** il file `.gpx` (nella cartella Download) oppure **ELIMINA** la traccia.
-  Nell'anteprima trovi anche il collegamento facoltativo per aprire il file con **GPX Viewer**.
+  nell'anteprima trovi anche il collegamento facoltativo per aprire il file con **GPX Viewer**.
+  Nell'archivio il tasto **home** (in alto a destra) riporta alla schermata principale; il **tasto indietro**
+  di Android chiude il pannello aperto e, dalla home, avvisa al primo tocco (*Premi di nuovo indietro per
+  uscire*) e chiude l'app al secondo tocco ravvicinato.
   Ogni traccia mostra data/ora, distanza, numero di punti e durata.
   La traccia in corso viene conservata sul telefono: se l'app viene chiusa dal sistema, alla riapertura viene
   recuperata e archiviata. Se il GPS resta senza segnale per più di 20 s si apre un nuovo tratto (`<trkseg>`)

@@ -196,6 +196,10 @@
     color:#9fb2c8;width:36px;height:36px;border-radius:11px;font:700 15px/1 system-ui,sans-serif;cursor:pointer;
     box-shadow:inset 0 1px 0 rgba(255,255,255,.10),inset 0 -3px 5px rgba(0,0,0,.45),0 3px 0 #060b11,0 5px 8px rgba(0,0,0,.4)}
   .sheet-close:active{transform:translateY(3px);box-shadow:inset 0 2px 5px rgba(0,0,0,.55)}
+  .sheet-actions{display:flex;align-items:center;gap:8px}
+  .sheet-close svg{width:18px;height:18px;display:block;margin:0 auto;stroke:currentColor;stroke-width:2;
+    fill:none;stroke-linecap:round;stroke-linejoin:round}
+  .sheet-close.home{color:#8ff0d6;border-color:#24545c}
   /* pannello TRACCE GPS a tutto schermo */
   .backdrop.tracks-backdrop{align-items:stretch;padding:0}
   .sheet-full{width:100%;max-width:none;height:100vh;height:100dvh;
@@ -408,7 +412,12 @@
   <section class="sheet sheet-full" role="dialog" aria-modal="true" aria-labelledby="tracksTitle">
     <div class="sheet-head">
       <div id="tracksTitle" class="sheet-title">TRACCE GPS</div>
-      <button id="closeTracks" class="sheet-close" aria-label="Chiudi">✕</button>
+      <div class="sheet-actions">
+        <button id="tracksHome" class="sheet-close home" type="button" aria-label="Torna alla home">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M6 10v10h12V10"/><path d="M10 20v-5h4v5"/></svg>
+        </button>
+        <button id="closeTracks" class="sheet-close" aria-label="Chiudi">✕</button>
+      </div>
     </div>
     <div id="tracksList" class="track-list"></div>
     <p class="sheet-note" id="tracksNote">Le tracce vengono salvate automaticamente quando premi STOP. APRI mostra il percorso, SCARICA salva il file .gpx.</p>
@@ -465,7 +474,7 @@
     showNowName: $('showNowName'), showNowDesc: $('showNowDesc'), sheetNote: $('sheetNote'),
     saveTrack: $('saveTrack'), saveTrackName: $('saveTrackName'), saveTrackDesc: $('saveTrackDesc'), gpxNote: $('gpxNote'),
     tracksBtn: $('tracksBtn'), tracksCount: $('tracksCount'), tracksLabel: $('tracksLabel'),
-    tracksPanel: $('tracksPanel'), closeTracks: $('closeTracks'), tracksTitle: $('tracksTitle'),
+    tracksPanel: $('tracksPanel'), closeTracks: $('closeTracks'), tracksHome: $('tracksHome'), tracksTitle: $('tracksTitle'),
     tracksList: $('tracksList'), tracksNote: $('tracksNote'),
     previewPanel: $('previewPanel'), closePreview: $('closePreview'), previewTitle: $('previewTitle'),
     trackCanvas: $('trackCanvas'), previewStats: $('previewStats'), previewDownload: $('previewDownload'),
@@ -545,7 +554,8 @@
       pvZoomIn:'Ingrandisci la mappa', pvZoomOut:'Riduci la mappa', pvFit:'Inquadra tutto il percorso',
       pvStyle:'Cambia mappa: strade o satellite',
       sLang:'LINGUA', sLangDesc:'Scegli la lingua dell\'app',
-      ariaSettings:'Impostazioni', ariaClose:'Chiudi'
+      ariaSettings:'Impostazioni', ariaClose:'Chiudi', ariaHome:'Torna alla home',
+      exitHint:'Premi di nuovo indietro per uscire'
     },
     en: {
       partialLabel:'PARTIAL DISTANCE METERS', totalLabel:'TOTAL DISTANCE KM',
@@ -582,7 +592,8 @@
       pvZoomIn:'Zoom in on the map', pvZoomOut:'Zoom out of the map', pvFit:'Fit the whole route',
       pvStyle:'Switch map: streets or satellite',
       sLang:'LANGUAGE', sLangDesc:'Choose the app language',
-      ariaSettings:'Settings', ariaClose:'Close'
+      ariaSettings:'Settings', ariaClose:'Close', ariaHome:'Back to home',
+      exitHint:'Press back again to exit'
     }
   };
 
@@ -634,6 +645,7 @@
     ui.closePreview.setAttribute('aria-label', tr('ariaClose'));
     ui.tracksBtn.setAttribute('aria-label', tr('sTracks'));
     ui.closeTracks.setAttribute('aria-label', tr('ariaClose'));
+    ui.tracksHome.setAttribute('aria-label', tr('ariaHome'));
     ui.settingsBtn.setAttribute('aria-label', tr('ariaSettings'));
     ui.settingsBtn.setAttribute('title', tr('ariaSettings'));
     ui.closeSettings.setAttribute('aria-label', tr('ariaClose'));
@@ -1559,6 +1571,7 @@
     if (open){
       pvView = null;          // ogni traccia si apre inquadrata per intero
       renderPreview();
+      syncBackGuard();
       ui.closePreview.focus();
     } else {
       previewRec = null;
@@ -1701,7 +1714,7 @@
     ui.settings.setAttribute('aria-hidden', open ? 'false' : 'true');
     ui.settingsBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
     syncModal();
-    if (open) ui.closeSettings.focus();
+    if (open){ syncBackGuard(); ui.closeSettings.focus(); }
     else if (ui.settings.contains(document.activeElement)) ui.settingsBtn.focus();
   }
 
@@ -1710,8 +1723,51 @@
     ui.tracksPanel.setAttribute('aria-hidden', open ? 'false' : 'true');
     ui.tracksBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
     syncModal();
-    if (open){ refreshTracks(); ui.closeTracks.focus(); }
+    if (open){ refreshTracks(); syncBackGuard(); ui.closeTracks.focus(); }
     else if (ui.tracksPanel.contains(document.activeElement)) ui.tracksBtn.focus();
+  }
+
+  /* ---------- tasto indietro: dal pannello si torna alla home, dalla home due tocchi per uscire ---------- */
+
+  let backTrap = false;        // voce di cronologia "trappola" davanti all'app
+  let lastBackAt = 0;          // istante del primo tocco indietro sulla home
+  let backRearmTimer = null;
+
+  function anyPanelOpen(){
+    return !ui.settings.classList.contains('hidden')
+      || !ui.tracksPanel.classList.contains('hidden')
+      || !ui.previewPanel.classList.contains('hidden');
+  }
+
+  function closeTopPanel(){
+    if (!ui.previewPanel.classList.contains('hidden')){ setPreview(false); return true; }
+    if (!ui.tracksPanel.classList.contains('hidden')){ setTracks(false); return true; }
+    if (!ui.settings.classList.contains('hidden')){ setSettings(false); return true; }
+    return false;
+  }
+
+  function ensureBackTrap(){
+    if (backTrap) return;
+    try{ history.pushState({ tripreg:1 }, ''); backTrap = true; }catch(e){ backTrap = false; }
+  }
+
+  // pannello aperto: la voce trappola deve essere sempre presente, così il primo indietro chiude il pannello
+  function syncBackGuard(){
+    if (!anyPanelOpen()) return;
+    clearTimeout(backRearmTimer);
+    backRearmTimer = null;
+    lastBackAt = 0;
+    ensureBackTrap();
+  }
+
+  // sulla home, dopo il primo tocco la trappola si riarma da sola se l'utente resta nell'app
+  function rearmBackTrap(){
+    clearTimeout(backRearmTimer);
+    backRearmTimer = setTimeout(()=>{
+      backRearmTimer = null;
+      lastBackAt = 0;
+      if (!anyPanelOpen()) ensureBackTrap();
+    }, 2400);
   }
 
   /* ---------- reset ---------- */
@@ -1772,6 +1828,7 @@
   ui.closeSettings.addEventListener('click', ()=> setSettings(false));
   ui.settings.addEventListener('click', (e)=>{ if (e.target === ui.settings) setSettings(false); });
   ui.tracksBtn.addEventListener('click', ()=> setTracks(true));
+  ui.tracksHome.addEventListener('click', ()=>{ setTracks(false); vibrate(20); });
   ui.closeTracks.addEventListener('click', ()=> setTracks(false));
   ui.tracksPanel.addEventListener('click', (e)=>{ if (e.target === ui.tracksPanel) setTracks(false); });
   ui.closePreview.addEventListener('click', ()=> setPreview(false));
@@ -1816,6 +1873,20 @@
       if (!ui.previewPanel.classList.contains('hidden')){ setPreview(false); return; }
       setSettings(false); setTracks(false);
     }
+  });
+  // tasto indietro di Android (o del browser): prima chiude il pannello aperto, poi con due tocchi esce
+  window.addEventListener('popstate', ()=>{
+    backTrap = false;                 // la voce trappola è stata consumata
+    if (closeTopPanel()){ ensureBackTrap(); return; }
+    const now = Date.now();
+    if (now - lastBackAt < 2400){
+      lastBackAt = 0;                 // secondo tocco ravvicinato: l'app può chiudersi
+      return;
+    }
+    lastBackAt = now;
+    toast(tr('exitHint'));
+    vibrate(25);
+    rearmBackTrap();
   });
   ui.banner.addEventListener('click', ()=>{ if (S.bannerClick) S.bannerClick(); });
 
@@ -1867,6 +1938,7 @@
   ui.saveTrack.checked = S.saveTrack;
   recoverTrack();   // archivia un'eventuale traccia rimasta da una sessione chiusa senza STOP
   refreshTracks();  // elenco e contatore per il tasto TRACCE GPS
+  ensureBackTrap(); // dalla home il primo "indietro" avvisa, il secondo chiude l'app
   applySpeedVisibility();
   render();
   setGps('idle');
