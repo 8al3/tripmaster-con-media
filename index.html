@@ -207,6 +207,21 @@
   .sheet-full .sheet-title{font-size:16px}
   .sheet-full .track-list{flex:1 1 auto;min-height:0;max-height:none;margin-bottom:8px;padding-right:2px}
   .sheet-full .sheet-note{flex:0 0 auto;margin:0 0 2px}
+  /* anteprima traccia: mappa disegnata nell'app, senza app esterne */
+  .preview-wrap{position:relative;flex:1 1 auto;min-height:0;border:1px solid #1d3a48;border-radius:14px;
+    overflow:hidden;background:#060c12;box-shadow:inset 0 0 34px rgba(0,0,0,.62)}
+  #trackCanvas{display:block;width:100%;height:100%}
+  .preview-stats{flex:0 0 auto;display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px}
+  .pv-stat{background:#0d141c;border:1px solid #1d2c3a;border-radius:10px;padding:8px 5px 9px;text-align:center}
+  .pv-k{font:700 9px/1.1 'Chakra Petch',system-ui,sans-serif;letter-spacing:.1em;color:var(--muted);margin-bottom:5px}
+  .pv-v{font:700 16px/1 'Rajdhani',system-ui,sans-serif;font-variant-numeric:tabular-nums;color:#e8eef7}
+  .pv-v small{font:700 9.5px/1 var(--mono);color:var(--muted);letter-spacing:.02em}
+  .preview-actions{flex:0 0 auto;display:flex;gap:8px;margin-top:10px}
+  .preview-actions .btn{flex:1 1 0;min-height:50px;font-size:14px;letter-spacing:.12em;padding:0 10px}
+  .preview-ext{flex:0 0 auto;align-self:center;margin:8px 0 0;appearance:none;-webkit-appearance:none;
+    background:none;border:0;color:#6ee7b7;font:700 11px/1.3 system-ui,sans-serif;letter-spacing:.05em;
+    cursor:pointer;padding:5px 8px;text-decoration:underline;text-underline-offset:3px}
+  .preview-ext.hidden{display:none}
   .setting-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 0;cursor:pointer}
   .setting-name{font-family:'Chakra Petch',system-ui,sans-serif;font-weight:700;font-size:15px;letter-spacing:.04em;color:#e8eef7}
   .setting-desc{font-size:12.5px;color:var(--muted);margin-top:3px;line-height:1.35}
@@ -388,7 +403,23 @@
       <button id="closeTracks" class="sheet-close" aria-label="Chiudi">✕</button>
     </div>
     <div id="tracksList" class="track-list"></div>
-    <p class="sheet-note" id="tracksNote">Le tracce vengono salvate automaticamente quando premi STOP. Tocca SCARICA per ottenere il file .gpx (Google Maps: mymaps.google.com → Crea mappa → Importa).</p>
+    <p class="sheet-note" id="tracksNote">Le tracce vengono salvate automaticamente quando premi STOP. APRI mostra il percorso, SCARICA salva il file .gpx.</p>
+  </section>
+</div>
+
+<div id="previewPanel" class="backdrop tracks-backdrop hidden" aria-hidden="true">
+  <section class="sheet sheet-full" role="dialog" aria-modal="true" aria-labelledby="previewTitle">
+    <div class="sheet-head">
+      <div id="previewTitle" class="sheet-title">ANTEPRIMA TRACCIA</div>
+      <button id="closePreview" class="sheet-close" aria-label="Chiudi">✕</button>
+    </div>
+    <div class="preview-wrap"><canvas id="trackCanvas"></canvas></div>
+    <div id="previewStats" class="preview-stats"></div>
+    <div class="preview-actions">
+      <button id="previewDownload" class="btn btn-main">SCARICA .GPX</button>
+      <button id="previewClose" class="btn btn-tracks">CHIUDI</button>
+    </div>
+    <button id="previewExt" class="preview-ext hidden" type="button">Apri con GPX Viewer</button>
   </section>
 </div>
 
@@ -412,6 +443,9 @@
     tracksBtn: $('tracksBtn'), tracksCount: $('tracksCount'), tracksLabel: $('tracksLabel'),
     tracksPanel: $('tracksPanel'), closeTracks: $('closeTracks'), tracksTitle: $('tracksTitle'),
     tracksList: $('tracksList'), tracksNote: $('tracksNote'),
+    previewPanel: $('previewPanel'), closePreview: $('closePreview'), previewTitle: $('previewTitle'),
+    trackCanvas: $('trackCanvas'), previewStats: $('previewStats'), previewDownload: $('previewDownload'),
+    previewClose: $('previewClose'), previewExt: $('previewExt'),
     langName: $('langName'), langDesc: $('langDesc'), langIt: $('langIt'), langEn: $('langEn')
   };
 
@@ -471,15 +505,18 @@
       sShowAvg:'Visualizza media?', sShowAvgDesc:'Mostra la media (km/h)',
       sShowNow:'Visualizza velocità attuale?', sShowNowDesc:'Mostra la velocità attuale (km/h)',
       sSaveTrack:'Registra traccia GPS?', sSaveTrackDesc:'Salva il percorso in Tracce GPS quando premi STOP',
-      sGpxNote:'La traccia parte con AVVIA e viene salvata automaticamente nell\'archivio Tracce GPS quando premi STOP. Apri Tracce GPS per aprire la traccia con GPX Viewer o scaricare il file .gpx (Google Maps: mymaps.google.com → Crea mappa → Importa). Chiudendo l\'app la traccia in corso viene recuperata e archiviata; i tratti senza segnale GPS restano separati, senza linee inventate.',
+      sGpxNote:'La traccia parte con AVVIA e viene salvata automaticamente nell\'archivio Tracce GPS quando premi STOP. Apri Tracce GPS per vedere il percorso nell\'app o scaricare il file .gpx (Google Maps: mymaps.google.com → Crea mappa → Importa). Chiudendo l\'app la traccia in corso viene recuperata e archiviata; i tratti senza segnale GPS restano separati, senza linee inventate.',
       sNote:'Media e velocità continuano a essere calcolate anche quando nascoste.',
       sTracks:'TRACCE GPS', btnTracks:'TRACCE GPS',
-      tracksNote:'Le tracce vengono salvate automaticamente quando premi STOP. APRI la traccia con GPX Viewer, oppure SCARICA il file .gpx (Google Maps: mymaps.google.com → Crea mappa → Importa).',
+      tracksNote:'Le tracce vengono salvate automaticamente quando premi STOP. APRI mostra il percorso qui nell\'app, SCARICA salva il file .gpx.',
       tracksEmpty:'Nessuna traccia salvata. Premi AVVIA, poi STOP per salvare il percorso.',
       tracksPts:'punti', btnDownload:'SCARICA', btnDelete:'ELIMINA', btnOpen:'APRI',
       tracksConfirmDelete:'Eliminare questa traccia?',
       tTrackSaved:'Traccia salvata in Tracce GPS', tDeleted:'Traccia eliminata',
       tOpenFallback:'Scegli GPX Viewer per aprire la traccia (.gpx scaricato)',
+      pvTitle:'ANTEPRIMA TRACCIA', pvDistance:'DISTANZA', pvDuration:'DURATA',
+      pvPoints:'PUNTI', pvAvg:'MEDIA', pvEmpty:'Questa traccia non contiene punti.',
+      btnPvDownload:'SCARICA .GPX', btnClose:'CHIUDI', pvExt:'Apri con GPX Viewer',
       sLang:'LINGUA', sLangDesc:'Scegli la lingua dell\'app',
       ariaSettings:'Impostazioni', ariaClose:'Chiudi'
     },
@@ -503,15 +540,18 @@
       sShowAvg:'Show average?', sShowAvgDesc:'Shows the average (km/h)',
       sShowNow:'Show current speed?', sShowNowDesc:'Shows the current speed (km/h)',
       sSaveTrack:'Record GPS track?', sSaveTrackDesc:'Saves the route in GPS Tracks when you press STOP',
-      sGpxNote:'The track starts with START and is automatically saved in the GPS Tracks archive when you press STOP. Open GPS Tracks to open the track with GPX Viewer or download the .gpx file (Google Maps: mymaps.google.com → Create a map → Import). If the app closes, the track in progress is recovered and archived; stretches without GPS signal stay separate, with no invented straight lines.',
+      sGpxNote:'The track starts with START and is automatically saved in the GPS Tracks archive when you press STOP. Open GPS Tracks to see the route in the app or download the .gpx file (Google Maps: mymaps.google.com → Create a map → Import). If the app closes, the track in progress is recovered and archived; stretches without GPS signal stay separate, with no invented straight lines.',
       sNote:'Average and speed keep being calculated even when hidden.',
       sTracks:'GPS TRACKS', btnTracks:'GPS TRACKS',
-      tracksNote:'Tracks are saved automatically when you press STOP. OPEN the track with GPX Viewer, or DOWNLOAD the .gpx file (Google Maps: mymaps.google.com → Create a map → Import).',
+      tracksNote:'Tracks are saved automatically when you press STOP. OPEN shows the route here in the app, DOWNLOAD saves the .gpx file.',
       tracksEmpty:'No saved tracks. Press START, then STOP to save the route.',
       tracksPts:'points', btnDownload:'DOWNLOAD', btnDelete:'DELETE', btnOpen:'OPEN',
       tracksConfirmDelete:'Delete this track?',
       tTrackSaved:'Track saved in GPS Tracks', tDeleted:'Track deleted',
       tOpenFallback:'Choose GPX Viewer to open the track (.gpx downloaded)',
+      pvTitle:'TRACK PREVIEW', pvDistance:'DISTANCE', pvDuration:'TIME',
+      pvPoints:'POINTS', pvAvg:'AVG', pvEmpty:'This track has no points.',
+      btnPvDownload:'DOWNLOAD .GPX', btnClose:'CLOSE', pvExt:'Open with GPX Viewer',
       sLang:'LANGUAGE', sLangDesc:'Choose the app language',
       ariaSettings:'Settings', ariaClose:'Close'
     }
@@ -554,6 +594,11 @@
     ui.langDesc.textContent      = tr('sLangDesc');
     ui.tracksTitle.textContent   = tr('sTracks');
     ui.tracksNote.textContent    = tr('tracksNote');
+    ui.previewTitle.textContent  = tr('pvTitle');
+    ui.previewDownload.textContent = tr('btnPvDownload');
+    ui.previewClose.textContent  = tr('btnClose');
+    ui.previewExt.textContent    = tr('pvExt');
+    ui.closePreview.setAttribute('aria-label', tr('ariaClose'));
     ui.tracksBtn.setAttribute('aria-label', tr('sTracks'));
     ui.closeTracks.setAttribute('aria-label', tr('ariaClose'));
     ui.settingsBtn.setAttribute('aria-label', tr('ariaSettings'));
@@ -569,6 +614,7 @@
     if (S.bannerKey && !ui.banner.classList.contains('hidden')) ui.banner.textContent = tr(S.bannerKey);
     render();        // numeri con separatore decimale della lingua
     if (!ui.tracksPanel.classList.contains('hidden')) renderTracksList();
+    if (!ui.previewPanel.classList.contains('hidden')) renderPreview();
   }
 
   /* numeri formattati secondo la lingua (virgola o punto decimale) */
@@ -1010,16 +1056,23 @@
     }catch(e){}
   }
 
+  // file GPX pronto da passare a un'altra app (GPX Viewer o simili)
+  function gpxFile(rec){
+    try{
+      return new File([rec.gpx], rec.filename || trackFilename(rec.start), { type:'application/gpx+xml' });
+    }catch(e){ return null; }
+  }
+  function canShareGpx(rec){
+    try{
+      const f = rec && gpxFile(rec);
+      return !!(f && navigator.share && navigator.canShare && navigator.canShare({ files:[f] }));
+    }catch(e){ return false; }
+  }
+
   // apre la traccia in un'app esterna (GPX Viewer) passando il file al sistema
   async function openGpx(rec){
-    const filename = rec.filename || trackFilename(rec.start);
-    let file = null;
-    try{ file = new File([rec.gpx], filename, {type:'application/gpx+xml'}); }catch(e){ file = null; }
-    let shareable = false;
-    try{
-      shareable = !!(file && navigator.share && navigator.canShare && navigator.canShare({files:[file]}));
-    }catch(e){ shareable = false; }
-    if (shareable){
+    const file = gpxFile(rec);
+    if (canShareGpx(rec)){
       try{
         await navigator.share({ files:[file], title: trackLabel(rec.start) });
         vibrate(20);
@@ -1085,7 +1138,7 @@
       op.type = 'button';
       op.className = 'mini-btn open';
       op.textContent = tr('btnOpen');
-      op.addEventListener('click', ()=>{ openGpx(rec); });
+      op.addEventListener('click', ()=>{ openPreview(rec); vibrate(20); });
 
       const dl = document.createElement('button');
       dl.type = 'button';
@@ -1114,6 +1167,221 @@
     vibrate(25);
     toast(tr('tDeleted'));
     refreshTracks();
+  }
+
+  /* ---------- anteprima della traccia disegnata nell'app (senza app esterne) ---------- */
+
+  let previewRec = null, previewPts = [];
+
+  // punti letti dal GPX archiviato: funziona anche con le tracce salvate prima di questa versione
+  function parseGpx(xml){
+    const out = [];
+    if (!xml) return out;
+    let doc = null;
+    try{ doc = new DOMParser().parseFromString(xml, 'application/xml'); }catch(e){ return out; }
+    if (!doc || doc.getElementsByTagName('parsererror').length) return out;
+    const segs = doc.getElementsByTagName('trkseg');
+    for (let s = 0; s < segs.length; s++){
+      const nodes = segs[s].getElementsByTagName('trkpt');
+      for (let i = 0; i < nodes.length; i++){
+        const lat = parseFloat(nodes[i].getAttribute('lat'));
+        const lon = parseFloat(nodes[i].getAttribute('lon'));
+        if (!isFinite(lat) || !isFinite(lon)) continue;
+        const tn = nodes[i].getElementsByTagName('time')[0];
+        const t = tn ? Date.parse(tn.textContent) : 0;
+        out.push({ lat:lat, lon:lon, t:isFinite(t) ? t : 0, seg:s });
+      }
+    }
+    return out;
+  }
+
+  function fmtDuration(ms){
+    const total = Math.max(0, Math.round((ms || 0) / 1000));
+    const h = Math.floor(total / 3600), m = Math.floor((total % 3600) / 60), s = total % 60;
+    return (h > 0 ? h + ':' + pad2(m) : String(m)) + ':' + pad2(s);
+  }
+
+  function previewStatsHtml(rec, pts){
+    const km = trackDistanceKm(pts);
+    const dur = Math.max(0, (rec.end || 0) - (rec.start || 0));
+    const avg = dur > 0 ? km / (dur / 3600000) : 0;
+    function cell(k, v, u){
+      return '<div class="pv-stat"><div class="pv-k">' + k + '</div><div class="pv-v">'
+        + v + (u ? ' <small>' + u + '</small>' : '') + '</div></div>';
+    }
+    return cell(tr('pvDistance'), nf2.format(km), 'km')
+      + cell(tr('pvDuration'), fmtDuration(dur), '')
+      + cell(tr('pvPoints'), nf0.format(pts.length), '')
+      + cell(tr('pvAvg'), nf1.format(avg), 'km/h');
+  }
+
+  function drawPreviewMap(){
+    const cv = ui.trackCanvas;
+    if (!cv || ui.previewPanel.classList.contains('hidden')) return;
+    const wrap = cv.parentElement;
+    const w = Math.max(1, Math.round(wrap.clientWidth));
+    const h = Math.max(1, Math.round(wrap.clientHeight));
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    cv.width = Math.round(w * dpr);
+    cv.height = Math.round(h * dpr);
+    cv.style.width = w + 'px';
+    cv.style.height = h + 'px';
+    const ctx = cv.getContext('2d');
+    if (!ctx) return;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    // fondo e griglia
+    const bg = ctx.createLinearGradient(0, 0, w, h);
+    bg.addColorStop(0, '#0a1420'); bg.addColorStop(1, '#060b11');
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, w, h);
+    ctx.strokeStyle = 'rgba(34,211,238,.07)';
+    ctx.lineWidth = 1;
+    for (let x = 42; x < w; x += 42){
+      ctx.beginPath(); ctx.moveTo(x + .5, 0); ctx.lineTo(x + .5, h); ctx.stroke();
+    }
+    for (let y = 42; y < h; y += 42){
+      ctx.beginPath(); ctx.moveTo(0, y + .5); ctx.lineTo(w, y + .5); ctx.stroke();
+    }
+
+    const pts = previewPts;
+    if (!pts.length){
+      ctx.fillStyle = '#7b8ca0';
+      ctx.font = '600 13px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(tr('pvEmpty'), w / 2, h / 2);
+      return;
+    }
+
+    // proiezione locale (longitudine corretta con il coseno della latitudine media)
+    let minLat = Infinity, maxLat = -Infinity, minLon = Infinity, maxLon = -Infinity;
+    for (let i = 0; i < pts.length; i++){
+      const p = pts[i];
+      if (p.lat < minLat) minLat = p.lat;
+      if (p.lat > maxLat) maxLat = p.lat;
+      if (p.lon < minLon) minLon = p.lon;
+      if (p.lon > maxLon) maxLon = p.lon;
+    }
+    const latC = (minLat + maxLat) / 2, lonC = (minLon + maxLon) / 2;
+    const kx = Math.cos(latC * Math.PI / 180) || 1;
+    const ex = (maxLon - minLon) * kx, ey = (maxLat - minLat);
+    const pad = 22;
+    let scale = 0;
+    if (ex > 1e-9 && ey > 1e-9) scale = Math.min((w - pad * 2) / ex, (h - pad * 2) / ey);
+    else if (ex > 1e-9) scale = (w - pad * 2) / ex;
+    else if (ey > 1e-9) scale = (h - pad * 2) / ey;
+
+    function proj(p){
+      return { x: w / 2 + (p.lon - lonC) * kx * scale,
+               y: h / 2 - (p.lat - latC) * scale };
+    }
+
+    // percorso: un tratto per ogni segmento GPX (nessuna linea inventata nei buchi di segnale)
+    const path = new Path2D();
+    let prevSeg = pts[0].seg, started = false;
+    for (let i = 0; i < pts.length; i++){
+      const q = proj(pts[i]);
+      if (!started || pts[i].seg !== prevSeg){ path.moveTo(q.x, q.y); started = true; prevSeg = pts[i].seg; }
+      else path.lineTo(q.x, q.y);
+    }
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = 'rgba(2,6,10,.9)';
+    ctx.lineWidth = 5.5;
+    ctx.stroke(path);
+    ctx.shadowColor = 'rgba(34,211,238,.55)';
+    ctx.shadowBlur = 8;
+    ctx.strokeStyle = '#22d3ee';
+    ctx.lineWidth = 2.4;
+    ctx.stroke(path);
+    ctx.shadowBlur = 0;
+
+    // partenza (A) e arrivo (B)
+    function marker(q, fill){
+      ctx.beginPath();
+      ctx.arc(q.x, q.y, 7, 0, Math.PI * 2);
+      ctx.fillStyle = fill;
+      ctx.fill();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = 'rgba(6,12,18,.9)';
+      ctx.stroke();
+    }
+    const a = proj(pts[0]), b = proj(pts[pts.length - 1]);
+    marker(a, '#34d399');
+    marker(b, '#f87171');
+    ctx.font = '700 9.5px "Chakra Petch", system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#04241b';
+    ctx.fillText('A', a.x, a.y + .5);
+    ctx.fillStyle = '#2a0707';
+    ctx.fillText('B', b.x, b.y + .5);
+
+    // barra di scala
+    const pxPerM = scale / 111320;   // 1° di latitudine ≈ 111,32 km
+    const nice = [10, 20, 25, 50, 100, 200, 250, 500, 1000, 2000, 2500, 5000, 10000, 20000, 25000, 50000, 100000];
+    let meters = nice[nice.length - 1];
+    for (let i = 0; i < nice.length; i++){ if (nice[i] * pxPerM >= 48){ meters = nice[i]; break; } }
+    let barPx = meters * pxPerM;
+    if (!isFinite(barPx) || barPx <= 0) barPx = 60;
+    barPx = Math.min(barPx, w - 40);
+    const bx = 14, by = h - 18;
+    ctx.strokeStyle = 'rgba(232,238,247,.7)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(bx, by); ctx.lineTo(bx + barPx, by);
+    ctx.moveTo(bx, by - 4); ctx.lineTo(bx, by + 4);
+    ctx.moveTo(bx + barPx, by - 4); ctx.lineTo(bx + barPx, by + 4);
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(232,238,247,.78)';
+    ctx.font = '700 10px "Rajdhani", system-ui, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText(meters >= 1000 ? nf1.format(meters / 1000) + ' km' : meters + ' m', bx, by - 6);
+
+    // indicatore nord (l'alto è nord: nessuna rotazione della mappa)
+    const nx = w - 20, ny = 20;
+    ctx.strokeStyle = 'rgba(232,238,247,.6)';
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.moveTo(nx, ny + 12); ctx.lineTo(nx, ny - 4);
+    ctx.moveTo(nx - 4, ny + 3); ctx.lineTo(nx, ny - 5); ctx.lineTo(nx + 4, ny + 3);
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(232,238,247,.72)';
+    ctx.font = '700 9px "Chakra Petch", system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillText('N', nx, ny + 15);
+  }
+
+  function renderPreview(){
+    if (!previewRec) return;
+    previewPts = parseGpx(previewRec.gpx);
+    ui.previewStats.innerHTML = previewStatsHtml(previewRec, previewPts);
+    ui.previewExt.textContent = tr('pvExt');
+    ui.previewExt.classList.toggle('hidden', !canShareGpx(previewRec));
+    requestAnimationFrame(drawPreviewMap);
+  }
+
+  function setPreview(open){
+    ui.previewPanel.classList.toggle('hidden', !open);
+    ui.previewPanel.setAttribute('aria-hidden', open ? 'false' : 'true');
+    syncModal();
+    if (open){
+      renderPreview();
+      ui.closePreview.focus();
+    } else {
+      previewRec = null;
+      previewPts = [];
+      const op = ui.tracksList.querySelector('.mini-btn.open');
+      if (op) op.focus();
+    }
+  }
+
+  function openPreview(rec){
+    previewRec = rec;
+    setPreview(true);
   }
 
   /* ---------- avvio / stop ---------- */
@@ -1230,7 +1498,9 @@
   }
 
   function syncModal(){
-    const open = !ui.settings.classList.contains('hidden') || !ui.tracksPanel.classList.contains('hidden');
+    const open = !ui.settings.classList.contains('hidden')
+      || !ui.tracksPanel.classList.contains('hidden')
+      || !ui.previewPanel.classList.contains('hidden');
     document.body.classList.toggle('modal-open', open);
   }
 
@@ -1312,8 +1582,23 @@
   ui.tracksBtn.addEventListener('click', ()=> setTracks(true));
   ui.closeTracks.addEventListener('click', ()=> setTracks(false));
   ui.tracksPanel.addEventListener('click', (e)=>{ if (e.target === ui.tracksPanel) setTracks(false); });
+  ui.closePreview.addEventListener('click', ()=> setPreview(false));
+  ui.previewClose.addEventListener('click', ()=> setPreview(false));
+  ui.previewPanel.addEventListener('click', (e)=>{ if (e.target === ui.previewPanel) setPreview(false); });
+  ui.previewDownload.addEventListener('click', ()=>{ if (previewRec) downloadGpx(previewRec); vibrate(20); });
+  ui.previewExt.addEventListener('click', ()=>{ if (previewRec) openGpx(previewRec); });
+  // il disegno della mappa segue le rotazioni del telefono e i cambi di dimensione
+  if (window.ResizeObserver && ui.trackCanvas){
+    const ro = new ResizeObserver(()=>{ drawPreviewMap(); });
+    ro.observe(ui.trackCanvas.parentElement);
+  } else {
+    window.addEventListener('resize', ()=>{ if (!ui.previewPanel.classList.contains('hidden')) drawPreviewMap(); });
+  }
   document.addEventListener('keydown', (e)=>{
-    if (e.key === 'Escape'){ setSettings(false); setTracks(false); }
+    if (e.key === 'Escape'){
+      if (!ui.previewPanel.classList.contains('hidden')){ setPreview(false); return; }
+      setSettings(false); setTracks(false);
+    }
   });
   ui.banner.addEventListener('click', ()=>{ if (S.bannerClick) S.bannerClick(); });
 
