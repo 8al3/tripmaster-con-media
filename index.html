@@ -433,6 +433,9 @@
         <button id="pvFitBtn" type="button" aria-label="Vedi tutto il percorso">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4H4v5M15 4h5v5M9 20H4v-5M15 20h5v-5"/></svg>
         </button>
+        <button id="pvStyleBtn" type="button" aria-label="Cambia mappa: strade o satellite">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 3 8l9 5 9-5-9-5Z"/><path d="M3 13l9 5 9-5"/></svg>
+        </button>
       </div>
     </div>
     <div id="previewStats" class="preview-stats"></div>
@@ -467,7 +470,7 @@
     previewPanel: $('previewPanel'), closePreview: $('closePreview'), previewTitle: $('previewTitle'),
     trackCanvas: $('trackCanvas'), previewStats: $('previewStats'), previewDownload: $('previewDownload'),
     previewClose: $('previewClose'), previewExt: $('previewExt'),
-    pvZoomIn: $('pvZoomIn'), pvZoomOut: $('pvZoomOut'), pvFitBtn: $('pvFitBtn'),
+    pvZoomIn: $('pvZoomIn'), pvZoomOut: $('pvZoomOut'), pvFitBtn: $('pvFitBtn'), pvStyleBtn: $('pvStyleBtn'),
     langName: $('langName'), langDesc: $('langDesc'), langIt: $('langIt'), langEn: $('langEn')
   };
 
@@ -540,6 +543,7 @@
       pvPoints:'PUNTI', pvAvg:'MEDIA', pvEmpty:'Questa traccia non contiene punti.',
       btnPvDownload:'SCARICA .GPX', btnClose:'CHIUDI', pvExt:'Apri con GPX Viewer',
       pvZoomIn:'Ingrandisci la mappa', pvZoomOut:'Riduci la mappa', pvFit:'Inquadra tutto il percorso',
+      pvStyle:'Cambia mappa: strade o satellite',
       sLang:'LINGUA', sLangDesc:'Scegli la lingua dell\'app',
       ariaSettings:'Impostazioni', ariaClose:'Chiudi'
     },
@@ -576,6 +580,7 @@
       pvPoints:'POINTS', pvAvg:'AVG', pvEmpty:'This track has no points.',
       btnPvDownload:'DOWNLOAD .GPX', btnClose:'CLOSE', pvExt:'Open with GPX Viewer',
       pvZoomIn:'Zoom in on the map', pvZoomOut:'Zoom out of the map', pvFit:'Fit the whole route',
+      pvStyle:'Switch map: streets or satellite',
       sLang:'LANGUAGE', sLangDesc:'Choose the app language',
       ariaSettings:'Settings', ariaClose:'Close'
     }
@@ -625,6 +630,7 @@
     ui.pvZoomIn.setAttribute('aria-label', tr('pvZoomIn'));
     ui.pvZoomOut.setAttribute('aria-label', tr('pvZoomOut'));
     ui.pvFitBtn.setAttribute('aria-label', tr('pvFit'));
+    ui.pvStyleBtn.setAttribute('aria-label', tr('pvStyle'));
     ui.closePreview.setAttribute('aria-label', tr('ariaClose'));
     ui.tracksBtn.setAttribute('aria-label', tr('sTracks'));
     ui.closeTracks.setAttribute('aria-label', tr('ariaClose'));
@@ -1242,11 +1248,26 @@
       + cell(tr('pvAvg'), nf1.format(avg), 'km/h');
   }
 
-  /* ---------- mappa dell'anteprima: tessere CARTO scure, griglia come riserva offline ---------- */
+  /* ---------- mappa dell'anteprima: strade OpenStreetMap o satellite Esri, senza chiavi API ---------- */
 
   const TILE_SIZE = 256, TILE_MIN_Z = 3, TILE_MAX_Z = 18;
-  const TILE_STYLE = 'dark_all', TILE_HOSTS = ['a', 'b', 'c', 'd'];
-  const pvTiles = new Map();     // 'z/x/y' -> { img, state, at }
+  const MAP_STYLES = {
+    street: {
+      name: 'strade',
+      attrib: '© OpenStreetMap contributors',
+      dark: false,
+      url: (z, x, y)=> 'https://tile.openstreetmap.org/' + z + '/' + x + '/' + y + '.png'
+    },
+    sat: {
+      name: 'satellite',
+      attrib: 'Imagery © Esri, Maxar, Earthstar Geographics',
+      dark: true,
+      url: (z, x, y)=> 'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/'
+        + z + '/' + y + '/' + x
+    }
+  };
+  const pvTiles = new Map();     // 'stile/z/x/y' -> { img, state, at }
+  let pvStyle = 'street';        // stile di partenza: la mappa stradale è la più leggibile
   let pvFitView = null;          // vista che inquadra tutta la traccia
   let pvView = null;             // vista corrente (zoom e trascinamento)
   let pvDrawQueued = false;
@@ -1262,26 +1283,31 @@
   function clampLat(lat){ return Math.max(-85.05112878, Math.min(85.05112878, lat)); }
 
   function pvTile(z, x, y){
-    const key = z + '/' + x + '/' + y;
+    const style = MAP_STYLES[pvStyle] || MAP_STYLES.street;
+    const key = pvStyle + '/' + z + '/' + x + '/' + y;
     const now = Date.now();
     let t = pvTiles.get(key);
     if (t && !(t.state === 'error' && now - t.at > 45000)) return t;   // riprova dopo 45 s
     t = { img:null, state:'loading', at:now };
-    if (pvTiles.size > 400){                 // tetto alla memoria: via le più vecchie
+    if (pvTiles.size > 500){                 // tetto alla memoria: via le più vecchie
       let i = 0;
-      for (const k of pvTiles.keys()){ pvTiles.delete(k); if (++i >= 80) break; }
+      for (const k of pvTiles.keys()){ pvTiles.delete(k); if (++i >= 100) break; }
     }
     const img = new Image();
     img.crossOrigin = 'anonymous';           // tessere "pulite": il canvas resta leggibile
-    img.referrerPolicy = 'no-referrer';
     img.decoding = 'async';
     img.onload = ()=>{ t.state = 'ok'; t.at = Date.now(); schedulePreviewDraw(); };
     img.onerror = ()=>{ t.state = 'error'; t.at = Date.now(); retryPreviewTiles(); };
     t.img = img;
     pvTiles.set(key, t);
-    img.src = 'https://' + TILE_HOSTS[(x + y) % 4] + '.basemaps.cartocdn.com/' + TILE_STYLE
-      + '/' + z + '/' + x + '/' + y + '.png';
+    img.src = style.url(z, x, y);
     return t;
+  }
+
+  function previewCycleStyle(){
+    pvStyle = pvStyle === 'street' ? 'sat' : 'street';
+    schedulePreviewDraw();
+    vibrate(15);
   }
 
   function schedulePreviewDraw(){
@@ -1443,6 +1469,35 @@
     ctx.fillStyle = '#2a0707';
     ctx.fillText('B', b.x, b.y + .5);
 
+    // riquadri semitrasparenti: i comandi restano leggibili sia sulla mappa chiara sia sul satellite
+    function chipRound(x, y, ww, hh, r, fill){
+      const rr = Math.min(r, hh / 2, ww / 2);
+      ctx.beginPath();
+      ctx.moveTo(x + rr, y);
+      ctx.arcTo(x + ww, y, x + ww, y + hh, rr);
+      ctx.arcTo(x + ww, y + hh, x, y + hh, rr);
+      ctx.arcTo(x, y + hh, x, y, rr);
+      ctx.arcTo(x, y, x + ww, y, rr);
+      ctx.closePath();
+      ctx.fillStyle = fill;
+      ctx.fill();
+    }
+
+    // fonte della mappa (obbligatoria quando le tessere sono visibili)
+    const styleInfo = MAP_STYLES[pvStyle] || MAP_STYLES.street;
+    let attribW = 0;
+    if (drawn){
+      const label = styleInfo.attrib;
+      ctx.font = '600 9px "Rajdhani", system-ui, sans-serif';
+      const tw = ctx.measureText(label).width;
+      attribW = Math.ceil(tw) + 12;
+      chipRound(w - attribW - 8, h - 22, attribW, 16, 6, 'rgba(6,12,18,.62)');
+      ctx.fillStyle = 'rgba(232,238,247,.82)';
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(label, w - 14, h - 13.5);
+    }
+
     // barra di scala (metri per pixel della proiezione Mercator alla latitudine della mappa)
     const mPerPx = 156543.03392 * Math.cos(clampLat(pvView.lat) * Math.PI / 180) / Math.pow(2, z);
     const pxPerM = mPerPx > 0 ? 1 / mPerPx : 0;
@@ -1451,47 +1506,37 @@
     for (let i = 0; i < nice.length; i++){ if (nice[i] * pxPerM >= 48){ meters = nice[i]; break; } }
     let barPx = meters * pxPerM;
     if (!isFinite(barPx) || barPx <= 0) barPx = 60;
-    barPx = Math.min(barPx, w - 40);
-    const bx = 14, by = h - 18;
-    ctx.strokeStyle = 'rgba(232,238,247,.75)';
+    barPx = Math.min(barPx, Math.max(40, w - attribW - 46));   // non finisce sotto la fonte
+    const chipX = 10, chipY = h - 40, chipW = barPx + 20, chipH = 30;
+    chipRound(chipX, chipY, chipW, chipH, 8, 'rgba(6,12,18,.62)');
+    const bx = chipX + 10, by = chipY + 22;
+    ctx.strokeStyle = 'rgba(232,238,247,.9)';
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(bx, by); ctx.lineTo(bx + barPx, by);
     ctx.moveTo(bx, by - 4); ctx.lineTo(bx, by + 4);
     ctx.moveTo(bx + barPx, by - 4); ctx.lineTo(bx + barPx, by + 4);
     ctx.stroke();
-    ctx.fillStyle = 'rgba(232,238,247,.82)';
+    ctx.fillStyle = 'rgba(232,238,247,.9)';
     ctx.font = '700 10px "Rajdhani", system-ui, sans-serif';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'bottom';
-    ctx.fillText(meters >= 1000 ? nf1.format(meters / 1000) + ' km' : meters + ' m', bx, by - 6);
-
-    // fonte della mappa (obbligatoria quando le tessere sono visibili)
-    if (drawn){
-      const label = '© OpenStreetMap · CARTO';
-      ctx.font = '600 9px "Rajdhani", system-ui, sans-serif';
-      const tw = ctx.measureText(label).width;
-      ctx.fillStyle = 'rgba(4,9,14,.55)';
-      ctx.fillRect(w - tw - 13, h - 20, tw + 12, 16);
-      ctx.fillStyle = 'rgba(232,238,247,.78)';
-      ctx.textAlign = 'right';
-      ctx.textBaseline = 'bottom';
-      ctx.fillText(label, w - 7, h - 7);
-    }
+    ctx.fillText(meters >= 1000 ? nf1.format(meters / 1000) + ' km' : meters + ' m', bx, by - 5);
 
     // indicatore nord (l'alto è nord: nessuna rotazione della mappa)
-    const nx = w - 20, ny = 20;
-    ctx.strokeStyle = 'rgba(232,238,247,.6)';
+    const nx = w - 21, ny = 18;
+    chipRound(w - 34, 12, 26, 38, 8, 'rgba(6,12,18,.55)');
+    ctx.strokeStyle = 'rgba(232,238,247,.75)';
     ctx.lineWidth = 1.6;
     ctx.beginPath();
-    ctx.moveTo(nx, ny + 12); ctx.lineTo(nx, ny - 4);
-    ctx.moveTo(nx - 4, ny + 3); ctx.lineTo(nx, ny - 5); ctx.lineTo(nx + 4, ny + 3);
+    ctx.moveTo(nx, ny + 11); ctx.lineTo(nx, ny - 3);
+    ctx.moveTo(nx - 4, ny + 2); ctx.lineTo(nx, ny - 4); ctx.lineTo(nx + 4, ny + 2);
     ctx.stroke();
-    ctx.fillStyle = 'rgba(232,238,247,.72)';
+    ctx.fillStyle = 'rgba(232,238,247,.8)';
     ctx.font = '700 9px "Chakra Petch", system-ui, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
-    ctx.fillText('N', nx, ny + 15);
+    ctx.fillText('N', nx, ny + 14);
   }
 
   function renderPreview(){
@@ -1737,6 +1782,7 @@
   ui.pvZoomIn.addEventListener('click', ()=> previewZoom(1));
   ui.pvZoomOut.addEventListener('click', ()=> previewZoom(-1));
   ui.pvFitBtn.addEventListener('click', ()=>{ pvView = null; schedulePreviewDraw(); vibrate(15); });
+  ui.pvStyleBtn.addEventListener('click', previewCycleStyle);
   // trascinamento con un dito per spostare la mappa (lo zoom resta sui tasti + e −)
   (function(){
     const cv = ui.trackCanvas;

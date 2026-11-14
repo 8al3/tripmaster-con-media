@@ -12,8 +12,9 @@ e la **velocità media di viaggio**.
   dentro l'app**: mappa stradale vera sotto la traccia, con partenza A, arrivo B, barra di scala e statistiche,
   senza installare nient'altro), **SCARICA** (salva il `.gpx` in Download) ed **ELIMINA**. Dall'anteprima, solo
   se ti serve, puoi passare il file a un'app esterna come GPX Viewer.
-- **Anteprima con mappa dettagliata**: sotto la traccia compaiono le **mappe di OpenStreetMap** (stile scuro
-  CARTO), con **zoom + / −**, **trascinamento** con un dito e il tasto per **inquadrare tutto il percorso**.
+- **Anteprima con mappa dettagliata**: sotto la traccia compaiono le **mappe di OpenStreetMap** (strade e nomi)
+  e, con un tocco sul tasto a strati, la **vista satellite** (Esri World Imagery). Nessuna chiave API da
+  configurare. Comandi: **zoom + / −**, **trascinamento** con un dito e tasto per **inquadrare tutto il percorso**.
   Le mappe vengono servite dalla rete: **senza connessione** l'anteprima ripiega da sola sulla griglia scura e la
   traccia resta perfettamente visibile.
 - La card **N° vignetta roadbook** è stata compattata su una riga per liberare spazio verticale.
@@ -47,10 +48,10 @@ e la **velocità media di viaggio**.
   controlla la registrazione del percorso: con **AVVIA** parte la traccia, con **STOP** la registrazione si chiude
   e il file **GPX** viene salvato nell'**archivio Tracce GPS**. Apri il tasto **TRACCE GPS** (sopra AVVIA/STOP) per
   vedere l'elenco delle tracce salvate a **tutto schermo**: per ognuna puoi **APRI** l'**anteprima** del percorso
-  (mappa a tutto schermo con le **mappe stradali OpenStreetMap** in stile scuro sotto la traccia: traccia in
-  ciano, partenza **A** verde, arrivo **B** rosso, barra di scala, indicatore nord e statistiche con distanza,
-  durata, punti e media; **zoom + / −**, **trascinamento** con un dito e tasto per **inquadrare tutto il
-  percorso**; senza connessione resta la griglia scura con la traccia, nessuna app esterna necessaria),
+  (mappa a tutto schermo con le **mappe OpenStreetMap** sotto la traccia e la **vista satellite** a un tocco:
+  traccia in ciano, partenza **A** verde, arrivo **B** rosso, barra di scala, indicatore nord e statistiche con
+  distanza, durata, punti e media; **zoom + / −**, **trascinamento** con un dito e tasto per **inquadrare tutto
+  il percorso**; senza connessione resta la griglia scura con la traccia, nessuna app esterna necessaria),
   **SCARICA** il file `.gpx` (nella cartella Download) oppure **ELIMINA** la traccia.
   Nell'anteprima trovi anche il collegamento facoltativo per aprire il file con **GPX Viewer**.
   Ogni traccia mostra data/ora, distanza, numero di punti e durata.
@@ -126,4 +127,4 @@ Poi apri `http://localhost:8010` sul telefono: `localhost` è considerato sicuro
 - Precisione tipica all'aperto: 3–10 m, molto peggiore tra edifici alti o in galleria.
 - Distanza calcolata in linea retta tra i punti: su percorsi molto tortuosi la stima è leggermente inferiore al reale.
 - La velocità attuale è una stima filtrata: in caso di segnale scarso può oscillare o restare a 0.
-- Non c'è mappa: aggiungerne una richiede connessione per le tile.
+- La mappa dell'anteprima (OpenStreetMap e satellite Esri) richiede connessione: offline resta la griglia con la traccia.

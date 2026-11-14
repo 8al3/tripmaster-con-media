@@ -1,4 +1,4 @@
-const CACHE = 'tripreg2-v17';
+const CACHE = 'tripreg2-v18';
 const ASSETS = [
   './',
   './index.html',
@@ -29,9 +29,9 @@ self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET') return;
 
-  // Tessere della mappa (CARTO): sempre dalla rete, senza finire nella cache dell'app.
+  // Tessere della mappa (OpenStreetMap / Esri): sempre dalla rete, senza finire nella cache dell'app.
   // Offline l'anteprima mostra la griglia: nessuna tessera vecchia da gestire.
-  if (req.url.indexOf('basemaps.cartocdn.com') !== -1) {
+  if (req.url.indexOf('tile.openstreetmap.org') !== -1 || req.url.indexOf('arcgisonline.com') !== -1) {
     event.respondWith(fetch(req).catch(() => new Response('', { status: 504 })));
     return;
   }
