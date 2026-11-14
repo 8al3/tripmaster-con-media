@@ -9,9 +9,13 @@ e la **velocità media di viaggio**.
 - **Tracce GPS**: a ogni STOP il percorso viene salvato automaticamente in un **archivio** consultabile
   dal nuovo tasto **TRACCE GPS** (sopra AVVIA/STOP), che ha lo stesso formato dei tasti AVVIA/STOP.
 - **Archivio a tutto schermo** con tre azioni per ogni traccia: **APRI** (apre l'**anteprima del percorso
-  dentro l'app**: mappa disegnata con partenza A, arrivo B, barra di scala e statistiche, senza installare
-  nient'altro), **SCARICA** (salva il `.gpx` in Download) ed **ELIMINA**. Dall'anteprima, solo se ti serve,
-  puoi passare il file a un'app esterna come GPX Viewer.
+  dentro l'app**: mappa stradale vera sotto la traccia, con partenza A, arrivo B, barra di scala e statistiche,
+  senza installare nient'altro), **SCARICA** (salva il `.gpx` in Download) ed **ELIMINA**. Dall'anteprima, solo
+  se ti serve, puoi passare il file a un'app esterna come GPX Viewer.
+- **Anteprima con mappa dettagliata**: sotto la traccia compaiono le **mappe di OpenStreetMap** (stile scuro
+  CARTO), con **zoom + / −**, **trascinamento** con un dito e il tasto per **inquadrare tutto il percorso**.
+  Le mappe vengono servite dalla rete: **senza connessione** l'anteprima ripiega da sola sulla griglia scura e la
+  traccia resta perfettamente visibile.
 - La card **N° vignetta roadbook** è stata compattata su una riga per liberare spazio verticale.
 - La traccia in corso resta sul telefono: se l'app viene chiusa, alla riapertura viene recuperata e archiviata.
 
@@ -43,9 +47,11 @@ e la **velocità media di viaggio**.
   controlla la registrazione del percorso: con **AVVIA** parte la traccia, con **STOP** la registrazione si chiude
   e il file **GPX** viene salvato nell'**archivio Tracce GPS**. Apri il tasto **TRACCE GPS** (sopra AVVIA/STOP) per
   vedere l'elenco delle tracce salvate a **tutto schermo**: per ognuna puoi **APRI** l'**anteprima** del percorso
-  (mappa disegnata nell'app, a tutto schermo: traccia in ciano, partenza **A** verde, arrivo **B** rosso,
-  barra di scala, indicatore nord e statistiche con distanza, durata, punti e media; nessuna app esterna
-  necessaria), **SCARICA** il file `.gpx` (nella cartella Download) oppure **ELIMINA** la traccia.
+  (mappa a tutto schermo con le **mappe stradali OpenStreetMap** in stile scuro sotto la traccia: traccia in
+  ciano, partenza **A** verde, arrivo **B** rosso, barra di scala, indicatore nord e statistiche con distanza,
+  durata, punti e media; **zoom + / −**, **trascinamento** con un dito e tasto per **inquadrare tutto il
+  percorso**; senza connessione resta la griglia scura con la traccia, nessuna app esterna necessaria),
+  **SCARICA** il file `.gpx` (nella cartella Download) oppure **ELIMINA** la traccia.
   Nell'anteprima trovi anche il collegamento facoltativo per aprire il file con **GPX Viewer**.
   Ogni traccia mostra data/ora, distanza, numero di punti e durata.
   La traccia in corso viene conservata sul telefono: se l'app viene chiusa dal sistema, alla riapertura viene

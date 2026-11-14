@@ -210,7 +210,15 @@
   /* anteprima traccia: mappa disegnata nell'app, senza app esterne */
   .preview-wrap{position:relative;flex:1 1 auto;min-height:0;border:1px solid #1d3a48;border-radius:14px;
     overflow:hidden;background:#060c12;box-shadow:inset 0 0 34px rgba(0,0,0,.62)}
-  #trackCanvas{display:block;width:100%;height:100%}
+  #trackCanvas{display:block;width:100%;height:100%;touch-action:none}
+  /* comandi mappa: zoom e "vedi tutto il percorso" */
+  .pv-zoom{position:absolute;right:8px;bottom:30px;display:flex;flex-direction:column;gap:6px;z-index:2}
+  .pv-zoom button{width:36px;height:36px;display:grid;place-items:center;padding:0;
+    background:rgba(8,15,22,.82);border:1px solid #1d3a48;border-radius:10px;color:#bfe9f2;
+    box-shadow:0 2px 8px rgba(0,0,0,.45);cursor:pointer;-webkit-tap-highlight-color:transparent}
+  .pv-zoom button:active{background:rgba(34,211,238,.18);border-color:#22d3ee;color:#e8eef7}
+  .pv-zoom svg{width:16px;height:16px;stroke:currentColor;stroke-width:2;fill:none;
+    stroke-linecap:round;stroke-linejoin:round}
   .preview-stats{flex:0 0 auto;display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px}
   .pv-stat{background:#0d141c;border:1px solid #1d2c3a;border-radius:10px;padding:8px 5px 9px;text-align:center}
   .pv-k{font:700 9px/1.1 'Chakra Petch',system-ui,sans-serif;letter-spacing:.1em;color:var(--muted);margin-bottom:5px}
@@ -413,7 +421,20 @@
       <div id="previewTitle" class="sheet-title">ANTEPRIMA TRACCIA</div>
       <button id="closePreview" class="sheet-close" aria-label="Chiudi">✕</button>
     </div>
-    <div class="preview-wrap"><canvas id="trackCanvas"></canvas></div>
+    <div class="preview-wrap">
+      <canvas id="trackCanvas"></canvas>
+      <div class="pv-zoom">
+        <button id="pvZoomIn" type="button" aria-label="Ingrandisci">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+        </button>
+        <button id="pvZoomOut" type="button" aria-label="Riduci">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg>
+        </button>
+        <button id="pvFitBtn" type="button" aria-label="Vedi tutto il percorso">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4H4v5M15 4h5v5M9 20H4v-5M15 20h5v-5"/></svg>
+        </button>
+      </div>
+    </div>
     <div id="previewStats" class="preview-stats"></div>
     <div class="preview-actions">
       <button id="previewDownload" class="btn btn-main">SCARICA .GPX</button>
@@ -446,6 +467,7 @@
     previewPanel: $('previewPanel'), closePreview: $('closePreview'), previewTitle: $('previewTitle'),
     trackCanvas: $('trackCanvas'), previewStats: $('previewStats'), previewDownload: $('previewDownload'),
     previewClose: $('previewClose'), previewExt: $('previewExt'),
+    pvZoomIn: $('pvZoomIn'), pvZoomOut: $('pvZoomOut'), pvFitBtn: $('pvFitBtn'),
     langName: $('langName'), langDesc: $('langDesc'), langIt: $('langIt'), langEn: $('langEn')
   };
 
@@ -517,6 +539,7 @@
       pvTitle:'ANTEPRIMA TRACCIA', pvDistance:'DISTANZA', pvDuration:'DURATA',
       pvPoints:'PUNTI', pvAvg:'MEDIA', pvEmpty:'Questa traccia non contiene punti.',
       btnPvDownload:'SCARICA .GPX', btnClose:'CHIUDI', pvExt:'Apri con GPX Viewer',
+      pvZoomIn:'Ingrandisci la mappa', pvZoomOut:'Riduci la mappa', pvFit:'Inquadra tutto il percorso',
       sLang:'LINGUA', sLangDesc:'Scegli la lingua dell\'app',
       ariaSettings:'Impostazioni', ariaClose:'Chiudi'
     },
@@ -552,6 +575,7 @@
       pvTitle:'TRACK PREVIEW', pvDistance:'DISTANCE', pvDuration:'TIME',
       pvPoints:'POINTS', pvAvg:'AVG', pvEmpty:'This track has no points.',
       btnPvDownload:'DOWNLOAD .GPX', btnClose:'CLOSE', pvExt:'Open with GPX Viewer',
+      pvZoomIn:'Zoom in on the map', pvZoomOut:'Zoom out of the map', pvFit:'Fit the whole route',
       sLang:'LANGUAGE', sLangDesc:'Choose the app language',
       ariaSettings:'Settings', ariaClose:'Close'
     }
@@ -598,6 +622,9 @@
     ui.previewDownload.textContent = tr('btnPvDownload');
     ui.previewClose.textContent  = tr('btnClose');
     ui.previewExt.textContent    = tr('pvExt');
+    ui.pvZoomIn.setAttribute('aria-label', tr('pvZoomIn'));
+    ui.pvZoomOut.setAttribute('aria-label', tr('pvZoomOut'));
+    ui.pvFitBtn.setAttribute('aria-label', tr('pvFit'));
     ui.closePreview.setAttribute('aria-label', tr('ariaClose'));
     ui.tracksBtn.setAttribute('aria-label', tr('sTracks'));
     ui.closeTracks.setAttribute('aria-label', tr('ariaClose'));
@@ -1215,6 +1242,98 @@
       + cell(tr('pvAvg'), nf1.format(avg), 'km/h');
   }
 
+  /* ---------- mappa dell'anteprima: tessere CARTO scure, griglia come riserva offline ---------- */
+
+  const TILE_SIZE = 256, TILE_MIN_Z = 3, TILE_MAX_Z = 18;
+  const TILE_STYLE = 'dark_all', TILE_HOSTS = ['a', 'b', 'c', 'd'];
+  const pvTiles = new Map();     // 'z/x/y' -> { img, state, at }
+  let pvFitView = null;          // vista che inquadra tutta la traccia
+  let pvView = null;             // vista corrente (zoom e trascinamento)
+  let pvDrawQueued = false;
+  let pvRetryTimer = null;       // nuovo tentativo per le tessere non caricate (rete assente)
+
+  // proiezione Web Mercator, la stessa delle tessere: la traccia cade esattamente sulle strade
+  function mercX(lon){ return (lon + 180) / 360; }
+  function mercY(lat){
+    const r = Math.max(-85.05112878, Math.min(85.05112878, lat)) * Math.PI / 180;
+    return (1 - Math.log(Math.tan(r) + 1 / Math.cos(r)) / Math.PI) / 2;
+  }
+  function mercLat(y){ return Math.atan(Math.sinh(Math.PI * (1 - 2 * y))) * 180 / Math.PI; }
+  function clampLat(lat){ return Math.max(-85.05112878, Math.min(85.05112878, lat)); }
+
+  function pvTile(z, x, y){
+    const key = z + '/' + x + '/' + y;
+    const now = Date.now();
+    let t = pvTiles.get(key);
+    if (t && !(t.state === 'error' && now - t.at > 45000)) return t;   // riprova dopo 45 s
+    t = { img:null, state:'loading', at:now };
+    if (pvTiles.size > 400){                 // tetto alla memoria: via le più vecchie
+      let i = 0;
+      for (const k of pvTiles.keys()){ pvTiles.delete(k); if (++i >= 80) break; }
+    }
+    const img = new Image();
+    img.crossOrigin = 'anonymous';           // tessere "pulite": il canvas resta leggibile
+    img.referrerPolicy = 'no-referrer';
+    img.decoding = 'async';
+    img.onload = ()=>{ t.state = 'ok'; t.at = Date.now(); schedulePreviewDraw(); };
+    img.onerror = ()=>{ t.state = 'error'; t.at = Date.now(); retryPreviewTiles(); };
+    t.img = img;
+    pvTiles.set(key, t);
+    img.src = 'https://' + TILE_HOSTS[(x + y) % 4] + '.basemaps.cartocdn.com/' + TILE_STYLE
+      + '/' + z + '/' + x + '/' + y + '.png';
+    return t;
+  }
+
+  function schedulePreviewDraw(){
+    if (pvDrawQueued) return;
+    pvDrawQueued = true;
+    requestAnimationFrame(()=>{ pvDrawQueued = false; drawPreviewMap(); });
+  }
+
+  // se la rete manca, riprova da solo dopo qualche secondo: quando torna il segnale la mappa riappare
+  function retryPreviewTiles(){
+    if (pvRetryTimer) return;
+    pvRetryTimer = setTimeout(()=>{
+      pvRetryTimer = null;
+      if (!ui.previewPanel || ui.previewPanel.classList.contains('hidden')) return;
+      for (const k of pvTiles.keys()){
+        const t = pvTiles.get(k);
+        if (t && t.state === 'error') pvTiles.delete(k);
+      }
+      schedulePreviewDraw();
+    }, 12000);
+  }
+
+  // zoom intero: la traccia entra nel riquadro e le tessere restano nitide (niente ingrandimenti)
+  function fitPreviewView(w, h){
+    const pts = previewPts;
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    for (let i = 0; i < pts.length; i++){
+      const p = pts[i];
+      if (p.mx < minX) minX = p.mx;
+      if (p.mx > maxX) maxX = p.mx;
+      if (p.my < minY) minY = p.my;
+      if (p.my > maxY) maxY = p.my;
+    }
+    const padX = 34, padY = 46;
+    const dx = maxX - minX, dy = maxY - minY;
+    const zx = dx > 1e-12 ? Math.log2(Math.max(1, w - padX * 2) / (TILE_SIZE * dx)) : Infinity;
+    const zy = dy > 1e-12 ? Math.log2(Math.max(1, h - padY * 2) / (TILE_SIZE * dy)) : Infinity;
+    let z = Math.min(zx, zy);
+    if (!isFinite(z)) z = 16;                // traccia con un solo punto
+    z = Math.max(TILE_MIN_Z, Math.min(TILE_MAX_Z, Math.floor(z)));
+    return { lat: mercLat((minY + maxY) / 2), lon: (minX + maxX) * 180 - 180, z: z };
+  }
+
+  function previewZoom(delta){
+    if (!pvView) return;
+    const z = Math.max(TILE_MIN_Z, Math.min(TILE_MAX_Z, pvView.z + delta));
+    if (z === pvView.z) return;
+    pvView.z = z;
+    schedulePreviewDraw();
+    vibrate(12);
+  }
+
   function drawPreviewMap(){
     const cv = ui.trackCanvas;
     if (!cv || ui.previewPanel.classList.contains('hidden')) return;
@@ -1222,15 +1341,19 @@
     const w = Math.max(1, Math.round(wrap.clientWidth));
     const h = Math.max(1, Math.round(wrap.clientHeight));
     const dpr = Math.min(2, window.devicePixelRatio || 1);
-    cv.width = Math.round(w * dpr);
-    cv.height = Math.round(h * dpr);
+    if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)){
+      cv.width = Math.round(w * dpr);
+      cv.height = Math.round(h * dpr);
+    }
     cv.style.width = w + 'px';
     cv.style.height = h + 'px';
     const ctx = cv.getContext('2d');
     if (!ctx) return;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.imageSmoothingEnabled = true;
+    try{ ctx.imageSmoothingQuality = 'high'; }catch(e){}
 
-    // fondo e griglia
+    // fondo e griglia: si vedono subito e restano come riserva quando non c'è rete
     const bg = ctx.createLinearGradient(0, 0, w, h);
     bg.addColorStop(0, '#0a1420'); bg.addColorStop(1, '#060b11');
     ctx.fillStyle = bg;
@@ -1254,27 +1377,29 @@
       return;
     }
 
-    // proiezione locale (longitudine corretta con il coseno della latitudine media)
-    let minLat = Infinity, maxLat = -Infinity, minLon = Infinity, maxLon = -Infinity;
-    for (let i = 0; i < pts.length; i++){
-      const p = pts[i];
-      if (p.lat < minLat) minLat = p.lat;
-      if (p.lat > maxLat) maxLat = p.lat;
-      if (p.lon < minLon) minLon = p.lon;
-      if (p.lon > maxLon) maxLon = p.lon;
+    pvFitView = fitPreviewView(w, h);
+    if (!pvView) pvView = { lat: pvFitView.lat, lon: pvFitView.lon, z: pvFitView.z };
+
+    const z = pvView.z;
+    const world = TILE_SIZE * Math.pow(2, z);
+    const tiles = Math.pow(2, z);
+    const ox = Math.round(mercX(pvView.lon) * world - w / 2);   // angolo in alto a sinistra, in pixel
+    const oy = Math.round(mercY(pvView.lat) * world - h / 2);
+    let drawn = 0;
+
+    // tessere della mappa (quelle non ancora arrivate lasciano vedere la griglia)
+    for (let ty = Math.floor(oy / TILE_SIZE); ty <= Math.floor((oy + h) / TILE_SIZE); ty++){
+      if (ty < 0 || ty >= tiles) continue;
+      for (let tx = Math.floor(ox / TILE_SIZE); tx <= Math.floor((ox + w) / TILE_SIZE); tx++){
+        const t = pvTile(z, ((tx % tiles) + tiles) % tiles, ty);
+        if (t.state !== 'ok') continue;
+        try{ ctx.drawImage(t.img, tx * TILE_SIZE - ox, ty * TILE_SIZE - oy, TILE_SIZE, TILE_SIZE); drawn++; }
+        catch(e){}
+      }
     }
-    const latC = (minLat + maxLat) / 2, lonC = (minLon + maxLon) / 2;
-    const kx = Math.cos(latC * Math.PI / 180) || 1;
-    const ex = (maxLon - minLon) * kx, ey = (maxLat - minLat);
-    const pad = 22;
-    let scale = 0;
-    if (ex > 1e-9 && ey > 1e-9) scale = Math.min((w - pad * 2) / ex, (h - pad * 2) / ey);
-    else if (ex > 1e-9) scale = (w - pad * 2) / ex;
-    else if (ey > 1e-9) scale = (h - pad * 2) / ey;
 
     function proj(p){
-      return { x: w / 2 + (p.lon - lonC) * kx * scale,
-               y: h / 2 - (p.lat - latC) * scale };
+      return { x: p.mx * world - ox, y: p.my * world - oy };
     }
 
     // percorso: un tratto per ogni segmento GPX (nessuna linea inventata nei buchi di segnale)
@@ -1287,20 +1412,20 @@
     }
     ctx.lineJoin = 'round';
     ctx.lineCap = 'round';
-    ctx.strokeStyle = 'rgba(2,6,10,.9)';
-    ctx.lineWidth = 5.5;
+    ctx.strokeStyle = 'rgba(2,6,10,.85)';
+    ctx.lineWidth = 6;
     ctx.stroke(path);
-    ctx.shadowColor = 'rgba(34,211,238,.55)';
-    ctx.shadowBlur = 8;
+    ctx.shadowColor = 'rgba(34,211,238,.6)';
+    ctx.shadowBlur = 9;
     ctx.strokeStyle = '#22d3ee';
-    ctx.lineWidth = 2.4;
+    ctx.lineWidth = 2.6;
     ctx.stroke(path);
     ctx.shadowBlur = 0;
 
     // partenza (A) e arrivo (B)
     function marker(q, fill){
       ctx.beginPath();
-      ctx.arc(q.x, q.y, 7, 0, Math.PI * 2);
+      ctx.arc(q.x, q.y, 7.5, 0, Math.PI * 2);
       ctx.fillStyle = fill;
       ctx.fill();
       ctx.lineWidth = 2;
@@ -1318,27 +1443,41 @@
     ctx.fillStyle = '#2a0707';
     ctx.fillText('B', b.x, b.y + .5);
 
-    // barra di scala
-    const pxPerM = scale / 111320;   // 1° di latitudine ≈ 111,32 km
-    const nice = [10, 20, 25, 50, 100, 200, 250, 500, 1000, 2000, 2500, 5000, 10000, 20000, 25000, 50000, 100000];
+    // barra di scala (metri per pixel della proiezione Mercator alla latitudine della mappa)
+    const mPerPx = 156543.03392 * Math.cos(clampLat(pvView.lat) * Math.PI / 180) / Math.pow(2, z);
+    const pxPerM = mPerPx > 0 ? 1 / mPerPx : 0;
+    const nice = [5, 10, 20, 25, 50, 100, 200, 250, 500, 1000, 2000, 2500, 5000, 10000, 20000, 25000, 50000, 100000, 200000];
     let meters = nice[nice.length - 1];
     for (let i = 0; i < nice.length; i++){ if (nice[i] * pxPerM >= 48){ meters = nice[i]; break; } }
     let barPx = meters * pxPerM;
     if (!isFinite(barPx) || barPx <= 0) barPx = 60;
     barPx = Math.min(barPx, w - 40);
     const bx = 14, by = h - 18;
-    ctx.strokeStyle = 'rgba(232,238,247,.7)';
+    ctx.strokeStyle = 'rgba(232,238,247,.75)';
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(bx, by); ctx.lineTo(bx + barPx, by);
     ctx.moveTo(bx, by - 4); ctx.lineTo(bx, by + 4);
     ctx.moveTo(bx + barPx, by - 4); ctx.lineTo(bx + barPx, by + 4);
     ctx.stroke();
-    ctx.fillStyle = 'rgba(232,238,247,.78)';
+    ctx.fillStyle = 'rgba(232,238,247,.82)';
     ctx.font = '700 10px "Rajdhani", system-ui, sans-serif';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'bottom';
     ctx.fillText(meters >= 1000 ? nf1.format(meters / 1000) + ' km' : meters + ' m', bx, by - 6);
+
+    // fonte della mappa (obbligatoria quando le tessere sono visibili)
+    if (drawn){
+      const label = '© OpenStreetMap · CARTO';
+      ctx.font = '600 9px "Rajdhani", system-ui, sans-serif';
+      const tw = ctx.measureText(label).width;
+      ctx.fillStyle = 'rgba(4,9,14,.55)';
+      ctx.fillRect(w - tw - 13, h - 20, tw + 12, 16);
+      ctx.fillStyle = 'rgba(232,238,247,.78)';
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'bottom';
+      ctx.fillText(label, w - 7, h - 7);
+    }
 
     // indicatore nord (l'alto è nord: nessuna rotazione della mappa)
     const nx = w - 20, ny = 20;
@@ -1358,10 +1497,14 @@
   function renderPreview(){
     if (!previewRec) return;
     previewPts = parseGpx(previewRec.gpx);
+    for (let i = 0; i < previewPts.length; i++){     // coordinate Mercator pronte per il disegno
+      previewPts[i].mx = mercX(previewPts[i].lon);
+      previewPts[i].my = mercY(previewPts[i].lat);
+    }
     ui.previewStats.innerHTML = previewStatsHtml(previewRec, previewPts);
     ui.previewExt.textContent = tr('pvExt');
     ui.previewExt.classList.toggle('hidden', !canShareGpx(previewRec));
-    requestAnimationFrame(drawPreviewMap);
+    schedulePreviewDraw();
   }
 
   function setPreview(open){
@@ -1369,11 +1512,15 @@
     ui.previewPanel.setAttribute('aria-hidden', open ? 'false' : 'true');
     syncModal();
     if (open){
+      pvView = null;          // ogni traccia si apre inquadrata per intero
       renderPreview();
       ui.closePreview.focus();
     } else {
       previewRec = null;
       previewPts = [];
+      pvView = null;
+      pvFitView = null;
+      if (pvRetryTimer){ clearTimeout(pvRetryTimer); pvRetryTimer = null; }
       const op = ui.tracksList.querySelector('.mini-btn.open');
       if (op) op.focus();
     }
@@ -1587,6 +1734,30 @@
   ui.previewPanel.addEventListener('click', (e)=>{ if (e.target === ui.previewPanel) setPreview(false); });
   ui.previewDownload.addEventListener('click', ()=>{ if (previewRec) downloadGpx(previewRec); vibrate(20); });
   ui.previewExt.addEventListener('click', ()=>{ if (previewRec) openGpx(previewRec); });
+  ui.pvZoomIn.addEventListener('click', ()=> previewZoom(1));
+  ui.pvZoomOut.addEventListener('click', ()=> previewZoom(-1));
+  ui.pvFitBtn.addEventListener('click', ()=>{ pvView = null; schedulePreviewDraw(); vibrate(15); });
+  // trascinamento con un dito per spostare la mappa (lo zoom resta sui tasti + e −)
+  (function(){
+    const cv = ui.trackCanvas;
+    if (!cv || !cv.addEventListener) return;
+    let drag = null;
+    cv.addEventListener('pointerdown', (e)=>{
+      if (!pvView || !previewPts.length) return;
+      drag = { x:e.clientX, y:e.clientY, lat:pvView.lat, lon:pvView.lon, id:e.pointerId };
+      try{ cv.setPointerCapture(e.pointerId); }catch(_){}
+    });
+    cv.addEventListener('pointermove', (e)=>{
+      if (!drag || e.pointerId !== drag.id) return;
+      const world = TILE_SIZE * Math.pow(2, pvView.z);
+      pvView.lon = (mercX(drag.lon) - (e.clientX - drag.x) / world) * 360 - 180;
+      pvView.lat = clampLat(mercLat(mercY(drag.lat) - (e.clientY - drag.y) / world));
+      schedulePreviewDraw();
+    });
+    const stop = ()=>{ drag = null; };
+    cv.addEventListener('pointerup', stop);
+    cv.addEventListener('pointercancel', stop);
+  })();
   // il disegno della mappa segue le rotazioni del telefono e i cambi di dimensione
   if (window.ResizeObserver && ui.trackCanvas){
     const ro = new ResizeObserver(()=>{ drawPreviewMap(); });

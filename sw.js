@@ -1,4 +1,4 @@
-const CACHE = 'tripreg2-v16';
+const CACHE = 'tripreg2-v17';
 const ASSETS = [
   './',
   './index.html',
@@ -28,6 +28,13 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET') return;
+
+  // Tessere della mappa (CARTO): sempre dalla rete, senza finire nella cache dell'app.
+  // Offline l'anteprima mostra la griglia: nessuna tessera vecchia da gestire.
+  if (req.url.indexOf('basemaps.cartocdn.com') !== -1) {
+    event.respondWith(fetch(req).catch(() => new Response('', { status: 504 })));
+    return;
+  }
 
   // Pagina: rete prima (aggiornamenti immediati), cache come riserva offline.
   if (req.mode === 'navigate') {
