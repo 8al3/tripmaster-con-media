@@ -126,7 +126,7 @@
 
   /* pulsanti "tasto meccanico" rally: faccia bombata, spigolo, corsa alla pressione */
   .btn{--face-top:#fcd34d;--face-mid:#fbbf24;--face-bot:#d97706;--edge:#92400e;color:#241a02;
-    appearance:none;border-radius:12px;font:700 14px/1 'Chakra Petch',system-ui,sans-serif;
+    appearance:none;border-radius:12px;font:700 18px/1 'Chakra Petch',system-ui,sans-serif;
     letter-spacing:.16em;text-shadow:0 1px 0 rgba(255,255,255,.3);
     min-height:50px;padding:0 16px;cursor:pointer;width:100%;position:relative;
     border:1px solid rgba(0,0,0,.45);
@@ -289,7 +289,6 @@
     .gear{width:37px;height:37px}
     .top-actions{gap:6px}
     .seg-btn{min-width:46px;padding:0 9px;font-size:12px}
-    .btn-tracks{font-size:16px;letter-spacing:.16em}
     .mini-btn{padding:8px}
   }
   @media (max-width:380px){
@@ -301,7 +300,7 @@
     .card{padding:8px 14px 10px}
     .btn{min-height:42px}
     .btn-main{min-height:50px}
-    .btn-tracks{min-height:50px;font-size:16px}
+    .btn-tracks{min-height:50px}
     .wrap{gap:8px;padding-bottom:calc(136px + env(safe-area-inset-bottom))}
     #toast{bottom:calc(146px + env(safe-area-inset-bottom))}
     main{gap:8px}
@@ -343,7 +342,7 @@
       <div class="speed-grid">
         <div>
           <div class="label green" id="avgLabel">MEDIA</div>
-          <div class="big"><span id="avgSpeed">0,0</span><span class="unit">km/h</span></div>
+          <div class="big"><span id="avgSpeed">0</span><span class="unit">km/h</span></div>
         </div>
         <div class="side">
           <div class="label cyan" id="nowLabel">VELOCITÀ</div>
@@ -544,7 +543,7 @@
       sTracks:'TRACCE GPS', btnTracks:'TRACCE GPS',
       tracksNote:'Le tracce vengono salvate automaticamente quando premi STOP. APRI mostra il percorso qui nell\'app, SCARICA salva il file .gpx.',
       tracksEmpty:'Nessuna traccia salvata. Premi AVVIA, poi STOP per salvare il percorso.',
-      tracksPts:'punti', btnDownload:'SCARICA', btnDelete:'ELIMINA', btnOpen:'APRI',
+      btnDownload:'SCARICA', btnDelete:'ELIMINA', btnOpen:'APRI',
       tracksConfirmDelete:'Eliminare questa traccia?',
       tTrackSaved:'Traccia salvata in Tracce GPS', tDeleted:'Traccia eliminata',
       tOpenFallback:'Scegli GPX Viewer per aprire la traccia (.gpx scaricato)',
@@ -582,7 +581,7 @@
       sTracks:'GPS TRACKS', btnTracks:'GPS TRACKS',
       tracksNote:'Tracks are saved automatically when you press STOP. OPEN shows the route here in the app, DOWNLOAD saves the .gpx file.',
       tracksEmpty:'No saved tracks. Press START, then STOP to save the route.',
-      tracksPts:'points', btnDownload:'DOWNLOAD', btnDelete:'DELETE', btnOpen:'OPEN',
+      btnDownload:'DOWNLOAD', btnDelete:'DELETE', btnOpen:'OPEN',
       tracksConfirmDelete:'Delete this track?',
       tTrackSaved:'Track saved in GPS Tracks', tDeleted:'Track deleted',
       tOpenFallback:'Choose GPX Viewer to open the track (.gpx downloaded)',
@@ -1147,9 +1146,8 @@
 
   function trackMeta(rec){
     const km = nf2.format(rec.distanceKm || 0);
-    const pts = nf0.format(rec.points || 0);
     const mins = Math.max(0, Math.round(((rec.end || 0) - (rec.start || 0)) / 60000));
-    return km + ' km · ' + pts + ' ' + tr('tracksPts') + ' · ' + mins + ' min';
+    return km + ' km · ' + mins + ' min';
   }
 
   function renderTracksList(){
@@ -1257,7 +1255,7 @@
     return cell(tr('pvDistance'), nf2.format(km), 'km')
       + cell(tr('pvDuration'), fmtDuration(dur), '')
       + cell(tr('pvPoints'), nf0.format(pts.length), '')
-      + cell(tr('pvAvg'), nf1.format(avg), 'km/h');
+      + cell(tr('pvAvg'), nf0.format(avg), 'km/h');
   }
 
   /* ---------- mappa dell'anteprima: strade OpenStreetMap o satellite Esri, senza chiavi API ---------- */
@@ -1814,7 +1812,7 @@
     const elapsedMs = S.tripStart ? (Date.now() - S.tripStart) : 0;
     const moveH = elapsedMs/3600000;
     S.avgKmh = moveH > 0.0001 ? S.totalKm/moveH : 0;
-    ui.avgSpeed.textContent = nf1.format(S.avgKmh);
+    ui.avgSpeed.textContent = nf0.format(S.avgKmh);
     ui.nowSpeed.textContent = nf0.format(S.speed);
   }
 

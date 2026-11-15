@@ -18,6 +18,8 @@ e la **velocità media di viaggio**.
   Le mappe vengono servite dalla rete: **senza connessione** l'anteprima ripiega da sola sulla griglia scura e la
   traccia resta perfettamente visibile.
 - **Tasto home nell'archivio**: in alto a destra, accanto alla ✕, riporta subito alla schermata principale.
+- **Home più uniforme**: tutti i tasti hanno la stessa dimensione del testo di **AVVIA**; la **media** è mostrata
+  senza decimali (es. `42 km/h`).
 - **Tasto indietro di Android**: con un pannello aperto lo chiude e torna alla home; sulla home il primo tocco mostra
   l'avviso *"Premi di nuovo indietro per uscire"*, il secondo tocco (entro circa 2 secondi) chiude l'app.
 - La card **N° vignetta roadbook** è stata compattata su una riga per liberare spazio verticale.
@@ -60,7 +62,7 @@ e la **velocità media di viaggio**.
   Nell'archivio il tasto **home** (in alto a destra) riporta alla schermata principale; il **tasto indietro**
   di Android chiude il pannello aperto e, dalla home, avvisa al primo tocco (*Premi di nuovo indietro per
   uscire*) e chiude l'app al secondo tocco ravvicinato.
-  Ogni traccia mostra data/ora, distanza, numero di punti e durata.
+  Ogni traccia mostra data/ora, distanza e durata.
   La traccia in corso viene conservata sul telefono: se l'app viene chiusa dal sistema, alla riapertura viene
   recuperata e archiviata. Se il GPS resta senza segnale per più di 20 s si apre un nuovo tratto (`<trkseg>`)
   invece di una linea retta, i salti GPS impossibili (> 250 km/h) vengono scartati e l'ultimo punto valido entra
@@ -69,7 +71,7 @@ e la **velocità media di viaggio**.
 - **N° Vignetta** — conta quante volte è stato premuto **RESET PARZIALE**, parte da **1** e si riporta a 1
   con **RESET TOTALE**.
 - **AVVIA / STOP** sempre visibile in basso (barra fissa), con il tasto **TRACCE GPS** sopra.
-- **All'avvio si riparte da zero**: 0 m, 0,00 km, media 0,0 km/h e N° Vignetta 1
+- **All'avvio si riparte da zero**: 0 m, 0,00 km, media 0 km/h e N° Vignetta 1
   (nessun dato precedente viene recuperato).
 - **Schermo sempre accesso** durante la registrazione (Wake Lock, dove supportato).
 - Funziona **offline** dopo il primo caricamento (service worker).
