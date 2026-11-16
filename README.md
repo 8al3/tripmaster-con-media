@@ -10,17 +10,18 @@ e la **velocità media di viaggio**.
   dal nuovo tasto **TRACCE GPS** (sopra AVVIA/STOP), che ha lo stesso formato dei tasti AVVIA/STOP.
 - **Archivio a tutto schermo** con tre azioni per ogni traccia: **APRI** (apre l'**anteprima del percorso
   dentro l'app**: mappa stradale vera sotto la traccia, con partenza A, arrivo B, barra di scala e statistiche,
-  senza installare nient'altro), **SCARICA** (salva il `.gpx` in Download) ed **ELIMINA**. Dall'anteprima, solo
-  se ti serve, puoi passare il file a un'app esterna come GPX Viewer.
+  senza installare nient'altro), **SCARICA** (salva il `.gpx` in Download) ed **ELIMINA**. Nell'anteprima i tasti
+  in basso sono tre: **SCARICA .GPX**, **CHIUDI** e **APRI CON GPX VIEWER**, che passa il file a un'app esterna.
 - **Anteprima con mappa dettagliata**: sotto la traccia compaiono le **mappe di OpenStreetMap** (strade e nomi)
   e, con un tocco sul tasto a strati, la **vista satellite** (Esri World Imagery). Nessuna chiave API da
   configurare. Comandi: **zoom + / −**, **trascinamento** con un dito e tasto per **inquadrare tutto il percorso**.
   Le mappe vengono servite dalla rete: **senza connessione** l'anteprima ripiega da sola sulla griglia scura e la
   traccia resta perfettamente visibile.
-- **Buchi di segnale completati sulla mappa**: se il GPS perde la ricezione, l'anteprima unisce il punto di perdita
-  e quello di ripresa con una linea **tratteggiata** (tratto simulato, indicato in legenda). Il tratto simulato
-  **aggiunge chilometri**: entra nella distanza e nella media (in linea retta), mentre il file GPX resta fedele ai
-  punti realmente registrati. Anche le tracce già archiviate vengono ricalcolate dal loro GPX.
+- **Buchi di segnale completati sulla mappa e nel file**: se il GPS perde la ricezione, l'anteprima unisce il punto
+  di perdita e quello di ripresa con una linea **tratteggiata** (tratto simulato, indicato in legenda) e il tratto
+  **aggiunge chilometri**, entrando nella distanza e nella media (in linea retta). Anche il **file .gpx esportato**
+  contiene quei tratti come punti interpolati, così il percorso non ha interruzioni; le tracce già archiviate
+  vengono ricalcolate dal loro GPX.
 - **Tasto home nell'archivio**: in alto a destra, accanto alla ✕, riporta subito alla schermata principale.
 - **Home più uniforme**: tutti i tasti hanno la stessa dimensione del testo di **AVVIA**; la **media** è mostrata
   senza decimali (es. `42 km/h`).
@@ -58,14 +59,16 @@ e la **velocità media di viaggio**.
   e il file **GPX** viene salvato nell'**archivio Tracce GPS**. Apri il tasto **TRACCE GPS** (sopra AVVIA/STOP) per
   vedere l'elenco delle tracce salvate a **tutto schermo**: per ognuna puoi **APRI** l'**anteprima** del percorso
   (mappa a tutto schermo con le **mappe OpenStreetMap** sotto la traccia e la **vista satellite** a un tocco:
-  traccia in ciano, partenza **A** verde, arrivo **B** rosso, barra di scala, indicatore nord e statistiche con
-  distanza, durata, punti e media; **zoom + / −**, **trascinamento** con un dito e tasto per **inquadrare tutto
+  traccia in ciano, partenza **A** verde, arrivo **B** rosso, barra di scala, indicatore nord e tre statistiche
+  (distanza, durata e media); in basso tre tasti compatti **SCARICA .GPX**, **CHIUDI** e
+  **APRI CON GPX VIEWER**; **zoom + / −**, **trascinamento** con un dito e tasto per **inquadrare tutto
   il percorso**; senza connessione resta la griglia scura con la traccia, nessuna app esterna necessaria;
   i buchi di segnale sono completati da un **tratto tratteggiato simulato** che unisce perdita e ripresa del
-  segnale; il tratto simulato **conta nella distanza e nella media**, mentre il file GPX resta fedele ai punti
-  realmente registrati),
+  segnale; il tratto simulato **conta nella distanza e nella media** ed è presente anche nel **file .gpx
+  esportato** come punti interpolati, così il percorso non ha interruzioni),
   **SCARICA** il file `.gpx` (nella cartella Download) oppure **ELIMINA** la traccia.
-  nell'anteprima trovi anche il collegamento facoltativo per aprire il file con **GPX Viewer**.
+  Nell'anteprima il tasto **APRI CON GPX VIEWER** passa il file a GPX Viewer o a un'altra app compatibile
+  (se il telefono non supporta la condivisione file, scarica il `.gpx` e mostra come aprirlo).
   Nell'archivio il tasto **home** (in alto a destra) riporta alla schermata principale; il **tasto indietro**
   di Android chiude il pannello aperto e, dalla home, avvisa al primo tocco (*Premi di nuovo indietro per
   uscire*) e chiude l'app al secondo tocco ravvicinato.
@@ -144,5 +147,6 @@ Poi apri `http://localhost:8010` sul telefono: `localhost` è considerato sicuro
 - La velocità attuale è una stima filtrata: in caso di segnale scarso può oscillare o restare a 0.
 - La mappa dell'anteprima (OpenStreetMap e satellite Esri) richiede connessione: offline resta la griglia con la traccia.
 - Nei buchi di segnale il tratto tratteggiato è una **simulazione in linea retta** tra perdita e ripresa del
-  segnale: viene conteggiato nella distanza (e quindi nella media), ma il percorso realmente fatto durante la
-  perdita del GPS non è noto e non compare come punti nel file GPX.
+  segnale: viene conteggiato nella distanza (e quindi nella media) e nel file `.gpx` esportato compare come punti
+  interpolati (posizione e orario stimati), ma il percorso realmente fatto durante la perdita del GPS non è noto.
+  L'archivio interno conserva comunque solo i punti realmente misurati.

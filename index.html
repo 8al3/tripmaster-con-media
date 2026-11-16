@@ -223,17 +223,19 @@
   .pv-zoom button:active{background:rgba(34,211,238,.18);border-color:#22d3ee;color:#e8eef7}
   .pv-zoom svg{width:16px;height:16px;stroke:currentColor;stroke-width:2;fill:none;
     stroke-linecap:round;stroke-linejoin:round}
-  .preview-stats{flex:0 0 auto;display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px}
+  .preview-stats{flex:0 0 auto;display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px}
   .pv-stat{background:#0d141c;border:1px solid #1d2c3a;border-radius:10px;padding:8px 5px 9px;text-align:center}
   .pv-k{font:700 9px/1.1 'Chakra Petch',system-ui,sans-serif;letter-spacing:.1em;color:var(--muted);margin-bottom:5px}
   .pv-v{font:700 16px/1 'Rajdhani',system-ui,sans-serif;font-variant-numeric:tabular-nums;color:#e8eef7}
   .pv-v small{font:700 9.5px/1 var(--mono);color:var(--muted);letter-spacing:.02em}
-  .preview-actions{flex:0 0 auto;display:flex;gap:8px;margin-top:10px}
-  .preview-actions .btn{flex:1 1 0;min-height:50px;font-size:14px;letter-spacing:.12em;padding:0 10px}
-  .preview-ext{flex:0 0 auto;align-self:center;margin:8px 0 0;appearance:none;-webkit-appearance:none;
-    background:none;border:0;color:#6ee7b7;font:700 11px/1.3 system-ui,sans-serif;letter-spacing:.05em;
-    cursor:pointer;padding:5px 8px;text-decoration:underline;text-underline-offset:3px}
-  .preview-ext.hidden{display:none}
+  /* tre tasti compatti in una riga: scarica, chiudi, apri con GPX Viewer */
+  .preview-actions{flex:0 0 auto;display:grid;grid-template-columns:.95fr .8fr 1.35fr;gap:6px;margin-top:10px}
+  .preview-actions .btn{min-height:44px;font-size:10.5px;letter-spacing:.03em;padding:0 6px;line-height:1.15}
+  .btn-green{--face-top:#a7f3d0;--face-mid:#34d399;--face-bot:#0d9488;--edge:#065f46;color:#052e22}
+  /* schermi molto stretti: i tre tasti restano su una riga sola */
+  @media (max-width:345px){
+    .preview-actions .btn{font-size:10px;letter-spacing:.01em;padding:0 4px}
+  }
   .setting-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 0;cursor:pointer}
   .setting-name{font-family:'Chakra Petch',system-ui,sans-serif;font-weight:700;font-size:15px;letter-spacing:.04em;color:#e8eef7}
   .setting-desc{font-size:12.5px;color:var(--muted);margin-top:3px;line-height:1.35}
@@ -450,8 +452,8 @@
     <div class="preview-actions">
       <button id="previewDownload" class="btn btn-main">SCARICA .GPX</button>
       <button id="previewClose" class="btn btn-tracks">CHIUDI</button>
+      <button id="previewExt" class="btn btn-green" type="button">APRI CON GPX VIEWER</button>
     </div>
-    <button id="previewExt" class="preview-ext hidden" type="button">Apri con GPX Viewer</button>
   </section>
 </div>
 
@@ -548,8 +550,8 @@
       tTrackSaved:'Traccia salvata in Tracce GPS', tDeleted:'Traccia eliminata',
       tOpenFallback:'Scegli GPX Viewer per aprire la traccia (.gpx scaricato)',
       pvTitle:'ANTEPRIMA TRACCIA', pvDistance:'DISTANZA', pvDuration:'DURATA',
-      pvPoints:'PUNTI', pvAvg:'MEDIA', pvEmpty:'Questa traccia non contiene punti.',
-      btnPvDownload:'SCARICA .GPX', btnClose:'CHIUDI', pvExt:'Apri con GPX Viewer',
+      pvAvg:'MEDIA', pvEmpty:'Questa traccia non contiene punti.',
+      btnPvDownload:'SCARICA .GPX', btnClose:'CHIUDI', pvExt:'APRI CON GPX VIEWER',
       pvZoomIn:'Ingrandisci la mappa', pvZoomOut:'Riduci la mappa', pvFit:'Inquadra tutto il percorso',
       pvStyle:'Cambia mappa: strade o satellite', pvSim:'tratto simulato',
       sLang:'LINGUA', sLangDesc:'Scegli la lingua dell\'app',
@@ -586,8 +588,8 @@
       tTrackSaved:'Track saved in GPS Tracks', tDeleted:'Track deleted',
       tOpenFallback:'Choose GPX Viewer to open the track (.gpx downloaded)',
       pvTitle:'TRACK PREVIEW', pvDistance:'DISTANCE', pvDuration:'TIME',
-      pvPoints:'POINTS', pvAvg:'AVG', pvEmpty:'This track has no points.',
-      btnPvDownload:'DOWNLOAD .GPX', btnClose:'CLOSE', pvExt:'Open with GPX Viewer',
+      pvAvg:'AVG', pvEmpty:'This track has no points.',
+      btnPvDownload:'DOWNLOAD .GPX', btnClose:'CLOSE', pvExt:'OPEN WITH GPX VIEWER',
       pvZoomIn:'Zoom in on the map', pvZoomOut:'Zoom out of the map', pvFit:'Fit the whole route',
       pvStyle:'Switch map: streets or satellite', pvSim:'simulated section',
       sLang:'LANGUAGE', sLangDesc:'Choose the app language',
@@ -1024,7 +1026,8 @@
   }
 
   // GPX 1.1 con più trkseg: si importa su Google Maps (mymaps.google.com → Importa)
-  // e in quasi tutti i navigatori/app di mappa.
+  // e in quasi tutti i navigatori/app di mappa. È la copia fedele salvata nell'archivio:
+  // i buchi di segnale restano separati, così l'anteprima li può tratteggiare.
   function buildGpx(pts, startTs){
     let xml = '<?xml version="1.0" encoding="UTF-8"?>\n'
       + '<gpx version="1.1" creator="Trip Regolarità 2.0" xmlns="http://www.topografix.com/GPX/1/1">\n'
@@ -1038,6 +1041,48 @@
     }
     xml += '    </trkseg>\n  </trk>\n</gpx>\n';
     return xml;
+  }
+
+  // GPX per l'esportazione: un solo trkseg e i buchi di segnale riempiti con punti simulati
+  // in linea retta tra perdita e ripresa, così il percorso non ha interruzioni.
+  function buildExportGpx(pts, startTs){
+    function pt(lat, lon, t, ele){
+      let s = '      <trkpt lat="' + lat.toFixed(7) + '" lon="' + lon.toFixed(7) + '">';
+      if (ele != null && isFinite(ele)) s += '<ele>' + ele.toFixed(1) + '</ele>';
+      return s + '<time>' + new Date(t).toISOString() + '</time></trkpt>\n';
+    }
+    let xml = '<?xml version="1.0" encoding="UTF-8"?>\n'
+      + '<gpx version="1.1" creator="Trip Regolarità 2.0" xmlns="http://www.topografix.com/GPX/1/1">\n'
+      + '  <trk>\n    <name>' + trackName(startTs) + '</name>\n    <trkseg>\n';
+    let prev = null;
+    for (const p of pts){
+      if (prev && p.seg !== prev.seg){
+        // tratto simulato: fino a 60 punti interpolati (posizione, quota e orario)
+        const dt = Math.max(0, p.t - prev.t);
+        const dm = haversine(prev.lat, prev.lon, p.lat, p.lon);
+        const n = Math.max(1, Math.min(60, Math.max(Math.round(dt / 1000), Math.ceil(dm / 100))));
+        for (let k = 1; k <= n; k++){
+          const f = k / (n + 1);
+          const ele = (prev.ele != null && p.ele != null) ? prev.ele + (p.ele - prev.ele) * f : null;
+          xml += pt(prev.lat + (p.lat - prev.lat) * f, prev.lon + (p.lon - prev.lon) * f,
+                    prev.t + dt * f, ele);
+        }
+      }
+      xml += pt(p.lat, p.lon, p.t, p.ele);
+      prev = p;
+    }
+    xml += '    </trkseg>\n  </trk>\n</gpx>\n';
+    return xml;
+  }
+
+  // file .gpx da scaricare o passare a un'altra app: rigenerato dai punti per riempire
+  // i tratti simulati anche nelle tracce archiviate prima di questa versione
+  function exportGpx(rec){
+    try{
+      const pts = parseGpx(rec.gpx);
+      if (pts.length >= 2) return buildExportGpx(pts, rec.start);
+    }catch(e){}
+    return rec.gpx;
   }
 
   // STOP: chiude la registrazione della traccia e la salva nell'archivio Tracce GPS
@@ -1091,7 +1136,7 @@
 
   function downloadGpx(rec){
     try{
-      const blob = new Blob([rec.gpx], {type:'application/gpx+xml'});
+      const blob = new Blob([exportGpx(rec)], {type:'application/gpx+xml'});
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -1106,7 +1151,7 @@
   // file GPX pronto da passare a un'altra app (GPX Viewer o simili)
   function gpxFile(rec){
     try{
-      return new File([rec.gpx], rec.filename || trackFilename(rec.start), { type:'application/gpx+xml' });
+      return new File([exportGpx(rec)], rec.filename || trackFilename(rec.start), { type:'application/gpx+xml' });
     }catch(e){ return null; }
   }
   function canShareGpx(rec){
@@ -1271,7 +1316,6 @@
     }
     return cell(tr('pvDistance'), nf2.format(km), 'km')
       + cell(tr('pvDuration'), fmtDuration(dur), '')
-      + cell(tr('pvPoints'), nf0.format(pts.length), '')
       + cell(tr('pvAvg'), nf0.format(avg), 'km/h');
   }
 
@@ -1618,7 +1662,6 @@
     }
     ui.previewStats.innerHTML = previewStatsHtml(previewRec, previewPts);
     ui.previewExt.textContent = tr('pvExt');
-    ui.previewExt.classList.toggle('hidden', !canShareGpx(previewRec));
     schedulePreviewDraw();
   }
 
