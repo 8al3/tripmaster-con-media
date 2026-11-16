@@ -3,6 +3,17 @@
 App web installabile (PWA) per Android che usa il GPS del telefono per misurare lo spostamento
 e la **velocità media di viaggio**.
 
+## Novità della 2.0.5
+
+- **VISUALIZZA SU GPS OSMAND apre la traccia direttamente in OsmAnd**, senza scaricare il file. Chrome non permette
+  di condividere i `.gpx` dal browser, quindi serve l'app Android aggiornata: il sito manda il GPX (compresso) a un link
+  `tripreg://open`, gestito da `OpenGpxActivity`, che lo salva nella cache e lo apre in OsmAnd (Plus, gratuita o nightly).
+  Se l'app non è aggiornata o OsmAnd manca, il pulsante ricade sul vecchio comportamento (condivisione o download).
+- **Rimosso il tasto grigio CHIUDI** dall'anteprima: si chiude con la ✕ in alto.
+- Per installare l'APK 2.0.5: `app-release-unsigned-2.0.5.apk` va firmato con la stessa chiave di prima
+  (`.\firma-apk.ps1`, chiede la password della keystore) e installato sopra la versione attuale. La parte web
+  (`index.html`) va pubblicata su GitHub Pages come sempre.
+
 ## Novità della 2.0.4
 
 - **Tasto STOP** al posto di PAUSA: ferma il viaggio **e chiude la registrazione del percorso**.
@@ -22,6 +33,11 @@ e la **velocità media di viaggio**.
   **aggiunge chilometri**, entrando nella distanza e nella media (in linea retta). Anche il **file .gpx esportato**
   contiene quei tratti come punti interpolati, così il percorso non ha interruzioni; le tracce già archiviate
   vengono ricalcolate dal loro GPX.
+- **Reset sul percorso**: RESET PARZIALE e RESET TOTALE vengono segnati nel punto in cui li premi (bandierina **P** ambra e
+  **T** viola nell'anteprima, con legenda). Nel file `.gpx` sono segnaposto `<wpt>` ("Reset parziale · 104 m",
+  "Reset totale · 0,28 km"), quindi compaiono anche in OsmAnd e nelle altre app. Valido per le tracce registrate da ora in poi.
+- **Anteprima navigabile**: pizzico a **due dita** per zoomare (e spostare insieme), un dito per trascinare, doppio tocco
+  per avvicinare, rotella del mouse su PC; restano i tasti + e −.
 - **Tasto home nell'archivio**: in alto a destra, accanto alla ✕, riporta subito alla schermata principale.
 - **Home più uniforme**: tutti i tasti hanno la stessa dimensione del testo di **AVVIA**; la **media** è mostrata
   senza decimali (es. `42 km/h`).

@@ -229,7 +229,7 @@
   .pv-v{font:700 16px/1 'Rajdhani',system-ui,sans-serif;font-variant-numeric:tabular-nums;color:#e8eef7}
   .pv-v small{font:700 9.5px/1 var(--mono);color:var(--muted);letter-spacing:.02em}
   /* tre tasti compatti in una riga: scarica, chiudi, visualizza in OsmAnd */
-  .preview-actions{flex:0 0 auto;display:grid;grid-template-columns:.86fr .49fr 1.65fr;gap:6px;margin-top:10px}
+  .preview-actions{flex:0 0 auto;display:grid;grid-template-columns:.86fr 1.65fr;gap:6px;margin-top:10px}
   .preview-actions .btn{min-height:44px;font-size:10.5px;letter-spacing:.03em;padding:0 6px;line-height:1.15}
   .btn-green{--face-top:#a7f3d0;--face-mid:#34d399;--face-bot:#0d9488;--edge:#065f46;color:#052e22}
   /* schermi molto stretti: i tre tasti restano su una riga sola */
@@ -451,7 +451,6 @@
     <div id="previewStats" class="preview-stats"></div>
     <div class="preview-actions">
       <button id="previewDownload" class="btn btn-main">SCARICA .GPX</button>
-      <button id="previewClose" class="btn btn-tracks">CHIUDI</button>
       <button id="previewExt" class="btn btn-green" type="button">VISUALIZZA SU GPS OSMAND</button>
     </div>
   </section>
@@ -479,7 +478,7 @@
     tracksList: $('tracksList'), tracksNote: $('tracksNote'),
     previewPanel: $('previewPanel'), closePreview: $('closePreview'), previewTitle: $('previewTitle'),
     trackCanvas: $('trackCanvas'), previewStats: $('previewStats'), previewDownload: $('previewDownload'),
-    previewClose: $('previewClose'), previewExt: $('previewExt'),
+    previewExt: $('previewExt'),
     pvZoomIn: $('pvZoomIn'), pvZoomOut: $('pvZoomOut'), pvFitBtn: $('pvFitBtn'), pvStyleBtn: $('pvStyleBtn'),
     langName: $('langName'), langDesc: $('langDesc'), langIt: $('langIt'), langEn: $('langEn')
   };
@@ -554,7 +553,7 @@
       pvAvg:'MEDIA', pvEmpty:'Questa traccia non contiene punti.',
       btnPvDownload:'SCARICA .GPX', btnClose:'CHIUDI', pvExt:'VISUALIZZA SU GPS OSMAND',
       pvZoomIn:'Ingrandisci la mappa', pvZoomOut:'Riduci la mappa', pvFit:'Inquadra tutto il percorso',
-      pvStyle:'Cambia mappa: strade o satellite', pvSim:'tratto simulato',
+      pvStyle:'Cambia mappa: strade o satellite', pvSim:'tratto simulato', pvMarkP:'reset parziale', pvMarkT:'reset totale', mkPartial:'Reset parziale', mkTotal:'Reset totale',
       sLang:'LINGUA', sLangDesc:'Scegli la lingua dell\'app',
       ariaSettings:'Impostazioni', ariaClose:'Chiudi', ariaHome:'Torna alla home',
       exitHint:'Premi di nuovo indietro per uscire'
@@ -593,7 +592,7 @@
       pvAvg:'AVG', pvEmpty:'This track has no points.',
       btnPvDownload:'DOWNLOAD .GPX', btnClose:'CLOSE', pvExt:'VIEW ON GPS OSMAND',
       pvZoomIn:'Zoom in on the map', pvZoomOut:'Zoom out of the map', pvFit:'Fit the whole route',
-      pvStyle:'Switch map: streets or satellite', pvSim:'simulated section',
+      pvStyle:'Switch map: streets or satellite', pvSim:'simulated section', pvMarkP:'partial reset', pvMarkT:'total reset', mkPartial:'Partial reset', mkTotal:'Total reset',
       sLang:'LANGUAGE', sLangDesc:'Choose the app language',
       ariaSettings:'Settings', ariaClose:'Close', ariaHome:'Back to home',
       exitHint:'Press back again to exit'
@@ -639,7 +638,6 @@
     ui.tracksNote.textContent    = tr('tracksNote');
     ui.previewTitle.textContent  = tr('pvTitle');
     ui.previewDownload.textContent = tr('btnPvDownload');
-    ui.previewClose.textContent  = tr('btnClose');
     ui.previewExt.textContent    = tr('pvExt');
     ui.pvZoomIn.setAttribute('aria-label', tr('pvZoomIn'));
     ui.pvZoomOut.setAttribute('aria-label', tr('pvZoomOut'));
@@ -845,6 +843,8 @@
   const TRACK_GAP_MS = 20000;   // fix mancanti oltre questo tempo: nuovo segmento, niente linea retta inventata
   const TRACK_MAX_KMH = 250;    // salto impossibile tra due fix: valore scartato come errore GPS
   let trackSeg = 0, trackLastFix = null, trackPending = null, trackSavedAt = 0;
+  // reset parziale (P) e totale (T) avvenuti durante la registrazione: restano sul percorso come segnaposto
+  let trackMarks = [];
 
   /* archivio tracce: IndexedDB (regge tracce lunghe) con riserva su localStorage */
   const ARCHIVE_DB = 'tripreg2-gps', ARCHIVE_STORE = 'tracks', ARCHIVE_LS = 'tripreg2.trackArchive';
@@ -937,7 +937,7 @@
     S.trackStart = Date.now();
     S.track = [];
     S.lastTrackPt = null;
-    trackSeg = 0; trackLastFix = null; trackPending = null;
+    trackSeg = 0; trackLastFix = null; trackPending = null; trackMarks = [];
     persistTrack(true); // sovrascrive subito la copia salvata sul telefono
   }
   // il percorso resta salvato sul dispositivo: se l'app viene chiusa dal sistema non si perde
@@ -949,6 +949,7 @@
       if (!S.trackOn){ localStorage.removeItem(TRACK_STORE); return; }
       localStorage.setItem(TRACK_STORE, JSON.stringify({
         start:S.trackStart, seg:trackSeg,
+        marks:trackMarks,
         pts:S.track.map(p=>[p.lat, p.lon, p.t, p.ele, p.seg])
       }));
     }catch(e){}
@@ -958,7 +959,7 @@
     S.trackStart = null;
     S.track = [];
     S.lastTrackPt = null;
-    trackPending = null; trackLastFix = null;
+    trackPending = null; trackLastFix = null; trackMarks = [];
     persistTrack(true);
     // niente più punti in arrivo: il timer demo può fermarsi (se il viaggio non è in registrazione)
     if (!S.tracking && S.demoTimer){ clearInterval(S.demoTimer); S.demoTimer = null; }
@@ -987,6 +988,36 @@
     S.track.push(p);
     S.lastTrackPt = p;
     persistTrack(false);
+  }
+
+  // segna sul percorso il punto in cui è avvenuto un reset ('P' parziale, 'T' totale).
+  // value: metri del parziale azzerato (P) o km totali azzerati (T)
+  function addTrackMark(kind, value){
+    if (!S.trackOn || !trackLastFix) return;   // senza posizione nota non c'è dove metterlo
+    trackMarks.push({ k:kind, lat:trackLastFix.lat, lon:trackLastFix.lon, t:Date.now(), v:value });
+    persistTrack(true);
+  }
+
+  function markName(k, v){
+    if (k === 'T') return tr('mkTotal') + (v > 0 ? ' · ' + nf2.format(v) + ' km' : '');
+    return tr('mkPartial') + (v > 0 ? ' · ' + nf0.format(Math.round(v)) + ' m' : '');
+  }
+
+  function escXml(s){
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // segnaposto GPX 1.1 (<wpt>, vanno prima di <trk>): OsmAnd e le altre app li mostrano sulla mappa
+  function marksXml(marks){
+    let xml = '';
+    for (const m of (marks || [])){
+      xml += '  <wpt lat="' + m.lat.toFixed(7) + '" lon="' + m.lon.toFixed(7) + '">'
+        + '<time>' + new Date(m.t).toISOString() + '</time>'
+        + '<name>' + escXml(markName(m.k, m.v)) + '</name>'
+        + '<sym>' + (m.k === 'T' ? 'flag-red' : 'flag-blue') + '</sym>'
+        + '<type>' + (m.k === 'T' ? 'reset_totale' : 'reset_parziale') + '</type></wpt>\n';
+    }
+    return xml;
   }
 
   function pad2(n){ return String(n).padStart(2,'0'); }
@@ -1030,9 +1061,10 @@
   // GPX 1.1 con più trkseg: si importa su Google Maps (mymaps.google.com → Importa)
   // e in quasi tutti i navigatori/app di mappa. È la copia fedele salvata nell'archivio:
   // i buchi di segnale restano separati, così l'anteprima li può tratteggiare.
-  function buildGpx(pts, startTs){
+  function buildGpx(pts, startTs, marks){
     let xml = '<?xml version="1.0" encoding="UTF-8"?>\n'
       + '<gpx version="1.1" creator="Trip Regolarità 2.0" xmlns="http://www.topografix.com/GPX/1/1">\n'
+      + marksXml(marks)
       + '  <trk>\n    <name>' + trackName(startTs) + '</name>\n    <trkseg>\n';
     let seg = pts.length ? pts[0].seg : 0;
     for (const p of pts){
@@ -1047,7 +1079,7 @@
 
   // GPX per l'esportazione: un solo trkseg e i buchi di segnale riempiti con punti simulati
   // in linea retta tra perdita e ripresa, così il percorso non ha interruzioni.
-  function buildExportGpx(pts, startTs){
+  function buildExportGpx(pts, startTs, marks){
     function pt(lat, lon, t, ele){
       let s = '      <trkpt lat="' + lat.toFixed(7) + '" lon="' + lon.toFixed(7) + '">';
       if (ele != null && isFinite(ele)) s += '<ele>' + ele.toFixed(1) + '</ele>';
@@ -1055,6 +1087,7 @@
     }
     let xml = '<?xml version="1.0" encoding="UTF-8"?>\n'
       + '<gpx version="1.1" creator="Trip Regolarità 2.0" xmlns="http://www.topografix.com/GPX/1/1">\n'
+      + marksXml(marks)
       + '  <trk>\n    <name>' + trackName(startTs) + '</name>\n    <trkseg>\n';
     let prev = null;
     for (const p of pts){
@@ -1083,7 +1116,7 @@
     if (rec._exportXml != null) return rec._exportXml;
     try{
       const pts = parseGpx(rec.gpx);
-      if (pts.length >= 2) return (rec._exportXml = buildExportGpx(pts, rec.start));
+      if (pts.length >= 2) return (rec._exportXml = buildExportGpx(pts, rec.start, parseMarks(rec.gpx)));
     }catch(e){}
     return rec.gpx;
   }
@@ -1102,7 +1135,7 @@
       points: pts.length,
       distanceKm: trackDistanceKm(pts),
       distanceWithGaps: true,
-      gpx: buildGpx(pts, start),
+      gpx: buildGpx(pts, start, trackMarks),
       savedAt: Date.now()
     } : null;
     stopTrack(); // svuota la traccia in corso e la copia temporanea
@@ -1130,7 +1163,7 @@
       points: pts.length,
       distanceKm: trackDistanceKm(pts),
       distanceWithGaps: true,
-      gpx: buildGpx(pts, start),
+      gpx: buildGpx(pts, start, Array.isArray(d.marks) ? d.marks : []),
       savedAt: Date.now(),
       recovered: true
     });
@@ -1199,8 +1232,46 @@
     }catch(e){ return false; }
   }
 
+  // Apertura diretta (app Android Trip Reg ≥ 2.0.5): il GPX, compresso, viaggia in un link tripreg://
+  // gestito dall'app, che lo passa a OsmAnd senza scaricare alcun file. Chrome non lascia
+  // condividere i .gpx dal browser, per questo serve l'app nativa.
+  const NATIVE_PKG = 'com.tripregolarita.app';
+
+  async function gzipB64url(text){
+    const stream = new Blob([text]).stream().pipeThrough(new CompressionStream('gzip'));
+    const buf = new Uint8Array(await new Response(stream).arrayBuffer());
+    let bin = '';
+    for (let i = 0; i < buf.length; i += 0x8000) bin += String.fromCharCode.apply(null, buf.subarray(i, i + 0x8000));
+    return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
+
+  // true se l'app ha preso in carico la traccia (la pagina passa in secondo piano); false → si usa il ripiego
+  async function openInOsmand(rec){
+    if (!/Android/i.test(navigator.userAgent) || typeof CompressionStream === 'undefined') return false;
+    let z = '';
+    try{ z = await gzipB64url(exportGpx(rec)); }catch(e){ return false; }
+    if (!z || z.length > 700000) return false;   // troppo grande per un intent: ripiego
+    const fallback = location.href.split('#')[0] + '#osmand';   // app non aggiornata: resta qui, niente Play Store
+    const url = 'intent://open?n=' + encodeURIComponent(gpxName(rec)) + '&z=' + z
+      + '#Intent;scheme=tripreg;package=' + NATIVE_PKG
+      + ';S.browser_fallback_url=' + encodeURIComponent(fallback) + ';end';
+    return new Promise(resolve=>{
+      let left = document.visibilityState === 'hidden';
+      const onHide = ()=>{ if (document.visibilityState === 'hidden') left = true; };
+      document.addEventListener('visibilitychange', onHide);
+      window.addEventListener('pagehide', onHide);
+      try{ location.href = url; }catch(e){}
+      setTimeout(()=>{
+        document.removeEventListener('visibilitychange', onHide);
+        window.removeEventListener('pagehide', onHide);
+        resolve(left);
+      }, 3000);
+    });
+  }
+
   // apre la traccia in OsmAnd (o in un'altra app scelta dal sistema) passando il file
   async function openGpx(rec){
+    if (await openInOsmand(rec)){ vibrate(20); return; }
     const file = gpxFile(rec);
     if (canShareGpx(file)){
       try{
@@ -1322,7 +1393,7 @@
 
   /* ---------- anteprima della traccia disegnata nell'app (senza app esterne) ---------- */
 
-  let previewRec = null, previewPts = [];
+  let previewRec = null, previewPts = [], previewMarks = [];
 
   // punti letti dal GPX archiviato: funziona anche con le tracce salvate prima di questa versione
   function parseGpx(xml){
@@ -1342,6 +1413,29 @@
         const t = tn ? Date.parse(tn.textContent) : 0;
         out.push({ lat:lat, lon:lon, t:isFinite(t) ? t : 0, seg:s });
       }
+    }
+    return out;
+  }
+
+  // segnaposto dei reset salvati nel GPX (<wpt> con <type> reset_parziale / reset_totale)
+  function parseMarks(xml){
+    const out = [];
+    if (!xml) return out;
+    let doc = null;
+    try{ doc = new DOMParser().parseFromString(xml, 'application/xml'); }catch(e){ return out; }
+    if (!doc || doc.getElementsByTagName('parsererror').length) return out;
+    const nodes = doc.getElementsByTagName('wpt');
+    for (let i = 0; i < nodes.length; i++){
+      const typ = nodes[i].getElementsByTagName('type')[0];
+      const kind = typ && typ.textContent === 'reset_totale' ? 'T' : (typ && typ.textContent === 'reset_parziale' ? 'P' : null);
+      if (!kind) continue;
+      const lat = parseFloat(nodes[i].getAttribute('lat'));
+      const lon = parseFloat(nodes[i].getAttribute('lon'));
+      if (!isFinite(lat) || !isFinite(lon)) continue;
+      const tn = nodes[i].getElementsByTagName('time')[0];
+      const nm = nodes[i].getElementsByTagName('name')[0];
+      const t = tn ? Date.parse(tn.textContent) : 0;
+      out.push({ k:kind, lat:lat, lon:lon, t:isFinite(t) ? t : 0, name:nm ? nm.textContent : '' });
     }
     return out;
   }
@@ -1368,6 +1462,7 @@
   /* ---------- mappa dell'anteprima: strade OpenStreetMap o satellite Esri, senza chiavi API ---------- */
 
   const TILE_SIZE = 256, TILE_MIN_Z = 3, TILE_MAX_Z = 18;
+  const PV_MAX_Z = 20;   // oltre il livello delle tessere (18) si ingrandisce scalandole
   const MAP_STYLES = {
     street: {
       name: 'strade',
@@ -1470,7 +1565,9 @@
 
   function previewZoom(delta){
     if (!pvView) return;
-    const z = Math.max(TILE_MIN_Z, Math.min(TILE_MAX_Z, pvView.z + delta));
+    // dopo un pizzico lo zoom è frazionario: i tasti + e − vanno al livello intero successivo
+    const base = delta > 0 ? Math.floor(pvView.z + 1e-6) + delta : Math.ceil(pvView.z - 1e-6) + delta;
+    const z = Math.max(TILE_MIN_Z, Math.min(PV_MAX_Z, base));
     if (z === pvView.z) return;
     pvView.z = z;
     schedulePreviewDraw();
@@ -1523,20 +1620,24 @@
     pvFitView = fitPreviewView(w, h);
     if (!pvView) pvView = { lat: pvFitView.lat, lon: pvFitView.lon, z: pvFitView.z };
 
+    // zoom continuo (pizzico a due dita): le tessere sono del livello intero più vicino e si scalano
     const z = pvView.z;
     const world = TILE_SIZE * Math.pow(2, z);
-    const tiles = Math.pow(2, z);
+    const tz = Math.max(TILE_MIN_Z, Math.min(TILE_MAX_Z, Math.round(z)));
+    const tiles = Math.pow(2, tz);
+    const ts = world / tiles;                                   // lato della tessera sullo schermo
     const ox = Math.round(mercX(pvView.lon) * world - w / 2);   // angolo in alto a sinistra, in pixel
     const oy = Math.round(mercY(pvView.lat) * world - h / 2);
     let drawn = 0;
 
     // tessere della mappa (quelle non ancora arrivate lasciano vedere la griglia)
-    for (let ty = Math.floor(oy / TILE_SIZE); ty <= Math.floor((oy + h) / TILE_SIZE); ty++){
+    for (let ty = Math.floor(oy / ts); ty <= Math.floor((oy + h) / ts); ty++){
       if (ty < 0 || ty >= tiles) continue;
-      for (let tx = Math.floor(ox / TILE_SIZE); tx <= Math.floor((ox + w) / TILE_SIZE); tx++){
-        const t = pvTile(z, ((tx % tiles) + tiles) % tiles, ty);
+      for (let tx = Math.floor(ox / ts); tx <= Math.floor((ox + w) / ts); tx++){
+        const t = pvTile(tz, ((tx % tiles) + tiles) % tiles, ty);
         if (t.state !== 'ok') continue;
-        try{ ctx.drawImage(t.img, tx * TILE_SIZE - ox, ty * TILE_SIZE - oy, TILE_SIZE, TILE_SIZE); drawn++; }
+        // mezzo pixel in più: niente righe chiare tra una tessera e l'altra quando sono scalate
+        try{ ctx.drawImage(t.img, tx * ts - ox, ty * ts - oy, ts + 0.5, ts + 0.5); drawn++; }
         catch(e){}
       }
     }
@@ -1609,6 +1710,37 @@
     ctx.fillStyle = '#2a0707';
     ctx.fillText('B', b.x, b.y + .5);
 
+    // reset parziale (P, ambra) e totale (T, viola): bandierina sopra il punto in cui sono avvenuti,
+    // così non coprono i cerchi di partenza e arrivo
+    function flag(q, fill, letter){
+      const poleH = 22, fw = 17, fh = 15;
+      ctx.strokeStyle = 'rgba(6,12,18,.95)';
+      ctx.lineWidth = 3.2;
+      ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(q.x, q.y); ctx.lineTo(q.x, q.y - poleH); ctx.stroke();
+      ctx.strokeStyle = fill;
+      ctx.lineWidth = 1.6;
+      ctx.beginPath(); ctx.moveTo(q.x, q.y); ctx.lineTo(q.x, q.y - poleH); ctx.stroke();
+      ctx.beginPath();
+      ctx.rect(q.x, q.y - poleH, fw, fh);
+      ctx.fillStyle = fill;
+      ctx.fill();
+      ctx.lineWidth = 1.6;
+      ctx.strokeStyle = 'rgba(6,12,18,.95)';
+      ctx.stroke();
+      ctx.fillStyle = '#10080a';
+      ctx.font = '700 10px "Chakra Petch", system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(letter, q.x + fw / 2, q.y - poleH + fh / 2 + .5);
+    }
+    let hasP = false, hasT = false;
+    for (let i = 0; i < previewMarks.length; i++){
+      const m = previewMarks[i];
+      if (m.k === 'T'){ hasT = true; flag(proj(m), '#c084fc', 'T'); }
+      else { hasP = true; flag(proj(m), '#fbbf24', 'P'); }
+    }
+
     // riquadri semitrasparenti: i comandi restano leggibili sia sulla mappa chiara sia sul satellite
     function chipRound(x, y, ww, hh, r, fill){
       const rr = Math.min(r, hh / 2, ww / 2);
@@ -1641,6 +1773,28 @@
       ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
       ctx.fillText(label, 41, 22.5);
+    }
+
+    // legenda dei reset (sotto quella del tratto simulato, se presente)
+    if (hasP || hasT){
+      ctx.font = '600 9.5px "Rajdhani", system-ui, sans-serif';
+      const parts = [];
+      if (hasP) parts.push(['#fbbf24', 'P ' + tr('pvMarkP')]);
+      if (hasT) parts.push(['#c084fc', 'T ' + tr('pvMarkT')]);
+      let cw = 12;
+      for (const p of parts) cw += ctx.measureText(p[1]).width + 22;
+      const cy = gapCount ? 38 : 12;
+      chipRound(10, cy, Math.ceil(cw), 20, 6, 'rgba(6,12,18,.62)');
+      let lx = 17;
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      for (const p of parts){
+        ctx.fillStyle = p[0];
+        ctx.fillRect(lx, cy + 6, 8, 8);
+        ctx.fillStyle = 'rgba(232,238,247,.85)';
+        ctx.fillText(p[1], lx + 12, cy + 10.5);
+        lx += ctx.measureText(p[1]).width + 22;
+      }
     }
 
     // fonte della mappa (obbligatoria quando le tessere sono visibili)
@@ -1706,6 +1860,11 @@
       previewPts[i].mx = mercX(previewPts[i].lon);
       previewPts[i].my = mercY(previewPts[i].lat);
     }
+    previewMarks = parseMarks(previewRec.gpx);
+    for (let i = 0; i < previewMarks.length; i++){
+      previewMarks[i].mx = mercX(previewMarks[i].lon);
+      previewMarks[i].my = mercY(previewMarks[i].lat);
+    }
     ui.previewStats.innerHTML = previewStatsHtml(previewRec, previewPts);
     ui.previewExt.textContent = tr('pvExt');
     schedulePreviewDraw();
@@ -1723,6 +1882,7 @@
     } else {
       previewRec = null;
       previewPts = [];
+      previewMarks = [];
       pvView = null;
       pvFitView = null;
       if (pvRetryTimer){ clearTimeout(pvRetryTimer); pvRetryTimer = null; }
@@ -1920,6 +2080,7 @@
   /* ---------- reset ---------- */
 
   function resetPartial(){
+    addTrackMark('P', S.partialKm * 1000);   // prima dell'azzeramento: segna dove e quanto
     S.vignetta++;
     const had = S.partialKm > 0.0005;
     S.partialKm = 0;
@@ -1929,6 +2090,7 @@
 
   function resetTotal(){
     const wasTracking = S.tracking;
+    addTrackMark('T', S.totalKm);   // prima di stop(): la traccia si chiude e si archivia lì
     stop(); // ferma la registrazione e archivia la traccia in Tracce GPS
     // NB: la traccia del percorso viene chiusa e salvata da stop(), non azzerata qui
     S.totalKm = 0;
@@ -1979,7 +2141,6 @@
   ui.closeTracks.addEventListener('click', ()=> setTracks(false));
   ui.tracksPanel.addEventListener('click', (e)=>{ if (e.target === ui.tracksPanel) setTracks(false); });
   ui.closePreview.addEventListener('click', ()=> setPreview(false));
-  ui.previewClose.addEventListener('click', ()=> setPreview(false));
   ui.previewPanel.addEventListener('click', (e)=>{ if (e.target === ui.previewPanel) setPreview(false); });
   ui.previewDownload.addEventListener('click', ()=>{ if (previewRec) downloadGpx(previewRec); vibrate(20); });
   ui.previewExt.addEventListener('click', ()=>{ if (previewRec) openGpx(previewRec); });
@@ -1987,26 +2148,98 @@
   ui.pvZoomOut.addEventListener('click', ()=> previewZoom(-1));
   ui.pvFitBtn.addEventListener('click', ()=>{ pvView = null; schedulePreviewDraw(); vibrate(15); });
   ui.pvStyleBtn.addEventListener('click', previewCycleStyle);
-  // trascinamento con un dito per spostare la mappa (lo zoom resta sui tasti + e −)
+  // mappa dell'anteprima: un dito sposta, due dita pizzicano per zoomare (e spostano insieme),
+  // rotella del mouse e doppio tocco zoomano sul punto toccato; restano anche i tasti + e −
   (function(){
     const cv = ui.trackCanvas;
     if (!cv || !cv.addEventListener) return;
-    let drag = null;
+    const ptrs = new Map();      // pointerId -> {x, y} in pixel del riquadro
+    let gesture = null;          // { kind:'pan'|'pinch', ... } punto di partenza del gesto
+    let lastTap = null;          // per il doppio tocco
+
+    function local(e){
+      const r = cv.getBoundingClientRect();
+      return { x:e.clientX - r.left, y:e.clientY - r.top };
+    }
+    function size(){ return { w:cv.clientWidth || 1, h:cv.clientHeight || 1 }; }
+    function worldAt(z){ return TILE_SIZE * Math.pow(2, z); }
+
+    // coordinate Mercator (0..1) del punto dello schermo (px, py) nella vista v
+    function screenToMerc(v, px, py){
+      const s = size(), wd = worldAt(v.z);
+      return { x: mercX(v.lon) + (px - s.w / 2) / wd, y: mercY(v.lat) + (py - s.h / 2) / wd };
+    }
+    // vista di zoom z in cui il punto Mercator m sta sotto (px, py)
+    function setViewAround(m, px, py, z){
+      const s = size(), wd = worldAt(z);
+      const cx = m.x - (px - s.w / 2) / wd, cy = m.y - (py - s.h / 2) / wd;
+      pvView.z = z;
+      pvView.lon = cx * 360 - 180;
+      pvView.lat = clampLat(mercLat(Math.max(0, Math.min(1, cy))));
+      schedulePreviewDraw();
+    }
+
+    function begin(){
+      if (!pvView) { gesture = null; return; }
+      const list = Array.from(ptrs.values());
+      if (list.length >= 2){
+        const a = list[0], b = list[1];
+        const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+        gesture = { kind:'pinch', d0:Math.max(10, Math.hypot(a.x - b.x, a.y - b.y)),
+                    z0:pvView.z, anchor:screenToMerc(pvView, mx, my) };
+      } else if (list.length === 1){
+        gesture = { kind:'pan', x:list[0].x, y:list[0].y, lat:pvView.lat, lon:pvView.lon };
+      } else gesture = null;
+    }
+
     cv.addEventListener('pointerdown', (e)=>{
       if (!pvView || !previewPts.length) return;
-      drag = { x:e.clientX, y:e.clientY, lat:pvView.lat, lon:pvView.lon, id:e.pointerId };
+      ptrs.set(e.pointerId, local(e));
       try{ cv.setPointerCapture(e.pointerId); }catch(_){}
+      begin();
     });
     cv.addEventListener('pointermove', (e)=>{
-      if (!drag || e.pointerId !== drag.id) return;
-      const world = TILE_SIZE * Math.pow(2, pvView.z);
-      pvView.lon = (mercX(drag.lon) - (e.clientX - drag.x) / world) * 360 - 180;
-      pvView.lat = clampLat(mercLat(mercY(drag.lat) - (e.clientY - drag.y) / world));
-      schedulePreviewDraw();
+      if (!ptrs.has(e.pointerId) || !gesture || !pvView) return;
+      ptrs.set(e.pointerId, local(e));
+      const list = Array.from(ptrs.values());
+      if (gesture.kind === 'pinch' && list.length >= 2){
+        const a = list[0], b = list[1];
+        const d = Math.max(10, Math.hypot(a.x - b.x, a.y - b.y));
+        const z = Math.max(TILE_MIN_Z, Math.min(PV_MAX_Z, gesture.z0 + Math.log2(d / gesture.d0)));
+        setViewAround(gesture.anchor, (a.x + b.x) / 2, (a.y + b.y) / 2, z);
+      } else if (gesture.kind === 'pan' && list.length === 1){
+        const world = worldAt(pvView.z), p = list[0];
+        pvView.lon = (mercX(gesture.lon) - (p.x - gesture.x) / world) * 360 - 180;
+        pvView.lat = clampLat(mercLat(mercY(gesture.lat) - (p.y - gesture.y) / world));
+        schedulePreviewDraw();
+      }
     });
-    const stop = ()=>{ drag = null; };
-    cv.addEventListener('pointerup', stop);
-    cv.addEventListener('pointercancel', stop);
+    function release(e){
+      const had = ptrs.has(e.pointerId);
+      const moved = had && gesture && gesture.kind === 'pan'
+        ? Math.hypot(ptrs.get(e.pointerId).x - gesture.x, ptrs.get(e.pointerId).y - gesture.y) : 99;
+      ptrs.delete(e.pointerId);
+      // doppio tocco: secondo tocco breve vicino al primo = zoom avanti sul punto
+      if (had && e.type === 'pointerup' && ptrs.size === 0 && moved < 8 && pvView){
+        const p = local(e), now = Date.now();
+        if (lastTap && now - lastTap.t < 320 && Math.hypot(p.x - lastTap.x, p.y - lastTap.y) < 28){
+          const m = screenToMerc(pvView, p.x, p.y);
+          setViewAround(m, p.x, p.y, Math.min(PV_MAX_Z, Math.floor(pvView.z + 1e-6) + 1));
+          lastTap = null;
+        } else lastTap = { t:now, x:p.x, y:p.y };
+      }
+      begin();   // se resta un dito, il gesto riparte da lì senza salti
+    }
+    cv.addEventListener('pointerup', release);
+    cv.addEventListener('pointercancel', release);
+    cv.addEventListener('wheel', (e)=>{
+      if (!pvView || !previewPts.length) return;
+      e.preventDefault();
+      const p = local(e);
+      const m = screenToMerc(pvView, p.x, p.y);
+      const z = Math.max(TILE_MIN_Z, Math.min(PV_MAX_Z, pvView.z - e.deltaY * 0.0025));
+      setViewAround(m, p.x, p.y, z);
+    }, { passive:false });
   })();
   // il disegno della mappa segue le rotazioni del telefono e i cambi di dimensione
   if (window.ResizeObserver && ui.trackCanvas){
