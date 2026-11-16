@@ -176,7 +176,7 @@
 
   #toast{position:fixed;left:50%;bottom:calc(166px + env(safe-area-inset-bottom));transform:translate(-50%,26px);
     background:#e8eef7;color:#0a1017;font:700 13px system-ui,sans-serif;padding:11px 18px;border-radius:999px;
-    opacity:0;pointer-events:none;transition:opacity .18s, transform .18s;z-index:20;max-width:88vw;text-align:center}
+    opacity:0;pointer-events:none;transition:opacity .18s, transform .18s;z-index:60;max-width:88vw;text-align:center}
   #toast.show{opacity:1;transform:translate(-50%,0)}
 
   body.modal-open{overflow:hidden}
@@ -1080,9 +1080,10 @@
   // file .gpx da scaricare o passare a un'altra app: rigenerato dai punti per riempire
   // i tratti simulati anche nelle tracce archiviate prima di questa versione
   function exportGpx(rec){
+    if (rec._exportXml != null) return rec._exportXml;
     try{
       const pts = parseGpx(rec.gpx);
-      if (pts.length >= 2) return buildExportGpx(pts, rec.start);
+      if (pts.length >= 2) return (rec._exportXml = buildExportGpx(pts, rec.start));
     }catch(e){}
     return rec.gpx;
   }
@@ -1184,36 +1185,43 @@
   // file GPX pronto da passare a OsmAnd o a un'altra app compatibile
   function gpxFile(rec){
     try{
-      return new File([exportGpx(rec)], rec.filename || trackFilename(rec.start), { type:'application/gpx+xml' });
+      const xml = exportGpx(rec);
+      if (!xml || xml.indexOf('<trkpt') < 0) return null;
+      return new File([xml], gpxName(rec), { type:'application/gpx+xml' });
     }catch(e){ return null; }
   }
-  function canShareGpx(rec){
+  // alcuni browser hanno navigator.share ma non navigator.canShare: in quel caso si prova comunque
+  function canShareGpx(file){
     try{
-      const f = rec && gpxFile(rec);
-      return !!(f && navigator.share && navigator.canShare && navigator.canShare({ files:[f] }));
+      if (!file || !navigator.share) return false;
+      if (!navigator.canShare) return true;
+      return !!navigator.canShare({ files:[file] });
     }catch(e){ return false; }
   }
 
   // apre la traccia in OsmAnd (o in un'altra app scelta dal sistema) passando il file
   async function openGpx(rec){
     const file = gpxFile(rec);
-    if (canShareGpx(rec)){
+    if (canShareGpx(file)){
       try{
         await navigator.share({ files:[file], title: trackLabel(rec.start) });
         vibrate(20);
         return;
       }catch(e){
         if (e && e.name === 'AbortError') return;   // condivisione annullata
+        // condivisione non riuscita (app assente, file non gestito): si passa al download
       }
     }
     // niente condivisione file: scarica il .gpx e indica come aprirlo.
     // Se il file è già stato scaricato non lo riscarica: evita la richiesta "Scaricare di nuovo?".
     if (downloadedGpx(rec)){
       toast(tr('tAlreadyDownloaded'));
+      vibrate(20);
       return;
     }
     downloadGpx(rec);
     toast(tr('tOpenFallback'));
+    vibrate(20);
   }
 
   async function refreshTracks(){
