@@ -228,8 +228,8 @@
   .pv-k{font:700 9px/1.1 'Chakra Petch',system-ui,sans-serif;letter-spacing:.1em;color:var(--muted);margin-bottom:5px}
   .pv-v{font:700 16px/1 'Rajdhani',system-ui,sans-serif;font-variant-numeric:tabular-nums;color:#e8eef7}
   .pv-v small{font:700 9.5px/1 var(--mono);color:var(--muted);letter-spacing:.02em}
-  /* tre tasti compatti in una riga: scarica, chiudi, apri con GPX Viewer */
-  .preview-actions{flex:0 0 auto;display:grid;grid-template-columns:.95fr .8fr 1.35fr;gap:6px;margin-top:10px}
+  /* tre tasti compatti in una riga: scarica, chiudi, visualizza in OsmAnd */
+  .preview-actions{flex:0 0 auto;display:grid;grid-template-columns:.86fr .49fr 1.65fr;gap:6px;margin-top:10px}
   .preview-actions .btn{min-height:44px;font-size:10.5px;letter-spacing:.03em;padding:0 6px;line-height:1.15}
   .btn-green{--face-top:#a7f3d0;--face-mid:#34d399;--face-bot:#0d9488;--edge:#065f46;color:#052e22}
   /* schermi molto stretti: i tre tasti restano su una riga sola */
@@ -452,7 +452,7 @@
     <div class="preview-actions">
       <button id="previewDownload" class="btn btn-main">SCARICA .GPX</button>
       <button id="previewClose" class="btn btn-tracks">CHIUDI</button>
-      <button id="previewExt" class="btn btn-green" type="button">APRI CON GPX VIEWER</button>
+      <button id="previewExt" class="btn btn-green" type="button">VISUALIZZA SU GPS OSMAND</button>
     </div>
   </section>
 </div>
@@ -548,10 +548,10 @@
       btnDownload:'SCARICA', btnDelete:'ELIMINA', btnOpen:'APRI',
       tracksConfirmDelete:'Eliminare questa traccia?',
       tTrackSaved:'Traccia salvata in Tracce GPS', tDeleted:'Traccia eliminata',
-      tOpenFallback:'Scegli GPX Viewer per aprire la traccia (.gpx scaricato)',
+      tOpenFallback:'Scegli OsmAnd per aprire la traccia (.gpx scaricato)',
       pvTitle:'ANTEPRIMA TRACCIA', pvDistance:'DISTANZA', pvDuration:'DURATA',
       pvAvg:'MEDIA', pvEmpty:'Questa traccia non contiene punti.',
-      btnPvDownload:'SCARICA .GPX', btnClose:'CHIUDI', pvExt:'APRI CON GPX VIEWER',
+      btnPvDownload:'SCARICA .GPX', btnClose:'CHIUDI', pvExt:'VISUALIZZA SU GPS OSMAND',
       pvZoomIn:'Ingrandisci la mappa', pvZoomOut:'Riduci la mappa', pvFit:'Inquadra tutto il percorso',
       pvStyle:'Cambia mappa: strade o satellite', pvSim:'tratto simulato',
       sLang:'LINGUA', sLangDesc:'Scegli la lingua dell\'app',
@@ -586,10 +586,10 @@
       btnDownload:'DOWNLOAD', btnDelete:'DELETE', btnOpen:'OPEN',
       tracksConfirmDelete:'Delete this track?',
       tTrackSaved:'Track saved in GPS Tracks', tDeleted:'Track deleted',
-      tOpenFallback:'Choose GPX Viewer to open the track (.gpx downloaded)',
+      tOpenFallback:'Choose OsmAnd to open the track (.gpx downloaded)',
       pvTitle:'TRACK PREVIEW', pvDistance:'DISTANCE', pvDuration:'TIME',
       pvAvg:'AVG', pvEmpty:'This track has no points.',
-      btnPvDownload:'DOWNLOAD .GPX', btnClose:'CLOSE', pvExt:'OPEN WITH GPX VIEWER',
+      btnPvDownload:'DOWNLOAD .GPX', btnClose:'CLOSE', pvExt:'VIEW ON GPS OSMAND',
       pvZoomIn:'Zoom in on the map', pvZoomOut:'Zoom out of the map', pvFit:'Fit the whole route',
       pvStyle:'Switch map: streets or satellite', pvSim:'simulated section',
       sLang:'LANGUAGE', sLangDesc:'Choose the app language',
@@ -1148,7 +1148,7 @@
     }catch(e){}
   }
 
-  // file GPX pronto da passare a un'altra app (GPX Viewer o simili)
+  // file GPX pronto da passare a OsmAnd o a un'altra app compatibile
   function gpxFile(rec){
     try{
       return new File([exportGpx(rec)], rec.filename || trackFilename(rec.start), { type:'application/gpx+xml' });
@@ -1161,7 +1161,7 @@
     }catch(e){ return false; }
   }
 
-  // apre la traccia in un'app esterna (GPX Viewer) passando il file al sistema
+  // apre la traccia in OsmAnd (o in un'altra app scelta dal sistema) passando il file
   async function openGpx(rec){
     const file = gpxFile(rec);
     if (canShareGpx(rec)){

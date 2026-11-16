@@ -11,7 +11,7 @@ e la **velocità media di viaggio**.
 - **Archivio a tutto schermo** con tre azioni per ogni traccia: **APRI** (apre l'**anteprima del percorso
   dentro l'app**: mappa stradale vera sotto la traccia, con partenza A, arrivo B, barra di scala e statistiche,
   senza installare nient'altro), **SCARICA** (salva il `.gpx` in Download) ed **ELIMINA**. Nell'anteprima i tasti
-  in basso sono tre: **SCARICA .GPX**, **CHIUDI** e **APRI CON GPX VIEWER**, che passa il file a un'app esterna.
+  in basso sono tre: **SCARICA .GPX**, **CHIUDI** e **VISUALIZZA SU GPS OSMAND**, che passa il file a OsmAnd.
 - **Anteprima con mappa dettagliata**: sotto la traccia compaiono le **mappe di OpenStreetMap** (strade e nomi)
   e, con un tocco sul tasto a strati, la **vista satellite** (Esri World Imagery). Nessuna chiave API da
   configurare. Comandi: **zoom + / −**, **trascinamento** con un dito e tasto per **inquadrare tutto il percorso**.
@@ -61,13 +61,13 @@ e la **velocità media di viaggio**.
   (mappa a tutto schermo con le **mappe OpenStreetMap** sotto la traccia e la **vista satellite** a un tocco:
   traccia in ciano, partenza **A** verde, arrivo **B** rosso, barra di scala, indicatore nord e tre statistiche
   (distanza, durata e media); in basso tre tasti compatti **SCARICA .GPX**, **CHIUDI** e
-  **APRI CON GPX VIEWER**; **zoom + / −**, **trascinamento** con un dito e tasto per **inquadrare tutto
+  **VISUALIZZA SU GPS OSMAND**; **zoom + / −**, **trascinamento** con un dito e tasto per **inquadrare tutto
   il percorso**; senza connessione resta la griglia scura con la traccia, nessuna app esterna necessaria;
   i buchi di segnale sono completati da un **tratto tratteggiato simulato** che unisce perdita e ripresa del
   segnale; il tratto simulato **conta nella distanza e nella media** ed è presente anche nel **file .gpx
   esportato** come punti interpolati, così il percorso non ha interruzioni),
   **SCARICA** il file `.gpx` (nella cartella Download) oppure **ELIMINA** la traccia.
-  Nell'anteprima il tasto **APRI CON GPX VIEWER** passa il file a GPX Viewer o a un'altra app compatibile
+  Nell'anteprima il tasto **VISUALIZZA SU GPS OSMAND** passa il file a OsmAnd (o a un'altra app compatibile)
   (se il telefono non supporta la condivisione file, scarica il `.gpx` e mostra come aprirlo).
   Nell'archivio il tasto **home** (in alto a destra) riporta alla schermata principale; il **tasto indietro**
   di Android chiude il pannello aperto e, dalla home, avvisa al primo tocco (*Premi di nuovo indietro per
