@@ -1013,10 +1013,11 @@
     return pts;
   }
 
+  // distanza della traccia: ai tratti realmente registrati si aggiunge il tratto simulato
+  // in linea retta tra perdita e ripresa del segnale (lo stesso tratteggio disegnato sulla mappa)
   function trackDistanceKm(pts){
     let m = 0;
     for (let i=1; i<pts.length; i++){
-      if (pts[i].seg !== pts[i-1].seg) continue;
       m += haversine(pts[i-1].lat, pts[i-1].lon, pts[i].lat, pts[i].lon);
     }
     return m/1000;
@@ -1052,6 +1053,7 @@
       end: end,
       points: pts.length,
       distanceKm: trackDistanceKm(pts),
+      distanceWithGaps: true,
       gpx: buildGpx(pts, start),
       savedAt: Date.now()
     } : null;
@@ -1079,6 +1081,7 @@
       end: pts[pts.length-1].t,
       points: pts.length,
       distanceKm: trackDistanceKm(pts),
+      distanceWithGaps: true,
       gpx: buildGpx(pts, start),
       savedAt: Date.now(),
       recovered: true
@@ -1144,8 +1147,22 @@
     ui.tracksCount.classList.toggle('hidden', n === 0);
   }
 
+  // km della traccia: per le tracce già archiviate ricalcola dal GPX includendo i tratti simulati
+  // (il valore salvato non viene modificato, il ricalcolo resta solo in memoria)
+  function recDistanceKm(rec){
+    if (rec.distanceWithGaps) return rec.distanceKm || 0;
+    if (rec._simKm != null) return rec._simKm;
+    let km = rec.distanceKm || 0;
+    try{
+      const pts = parseGpx(rec.gpx);
+      if (pts.length >= 2) km = trackDistanceKm(pts);
+    }catch(e){}
+    rec._simKm = km;
+    return km;
+  }
+
   function trackMeta(rec){
-    const km = nf2.format(rec.distanceKm || 0);
+    const km = nf2.format(recDistanceKm(rec));
     const mins = Math.max(0, Math.round(((rec.end || 0) - (rec.start || 0)) / 60000));
     return km + ' km · ' + mins + ' min';
   }
