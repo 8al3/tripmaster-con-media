@@ -549,6 +549,7 @@
       tracksConfirmDelete:'Eliminare questa traccia?',
       tTrackSaved:'Traccia salvata in Tracce GPS', tDeleted:'Traccia eliminata',
       tOpenFallback:'Scegli OsmAnd per aprire la traccia (.gpx scaricato)',
+      tAlreadyDownloaded:'File già scaricato',
       pvTitle:'ANTEPRIMA TRACCIA', pvDistance:'DISTANZA', pvDuration:'DURATA',
       pvAvg:'MEDIA', pvEmpty:'Questa traccia non contiene punti.',
       btnPvDownload:'SCARICA .GPX', btnClose:'CHIUDI', pvExt:'VISUALIZZA SU GPS OSMAND',
@@ -587,6 +588,7 @@
       tracksConfirmDelete:'Delete this track?',
       tTrackSaved:'Track saved in GPS Tracks', tDeleted:'Track deleted',
       tOpenFallback:'Choose OsmAnd to open the track (.gpx downloaded)',
+      tAlreadyDownloaded:'File already downloaded',
       pvTitle:'TRACK PREVIEW', pvDistance:'DISTANCE', pvDuration:'TIME',
       pvAvg:'AVG', pvEmpty:'This track has no points.',
       btnPvDownload:'DOWNLOAD .GPX', btnClose:'CLOSE', pvExt:'VIEW ON GPS OSMAND',
@@ -1134,16 +1136,47 @@
     refreshTracks();
   }
 
+  /* file .gpx già scaricati: evita il secondo download e la richiesta "Scaricare di nuovo?"
+     del browser quando si preme di nuovo VISUALIZZA SU GPS OSMAND */
+  const DL_STORE = 'tripreg2.gpxDownloaded';
+
+  function gpxName(rec){
+    return rec.filename || trackFilename(rec.start);
+  }
+
+  function downloadedGpx(rec){
+    try{
+      const m = JSON.parse(localStorage.getItem(DL_STORE) || '{}') || {};
+      return !!m[gpxName(rec)];
+    }catch(e){ return false; }
+  }
+
+  function markGpxDownloaded(rec){
+    try{
+      let m = {};
+      try{ m = JSON.parse(localStorage.getItem(DL_STORE) || '{}') || {}; }catch(e){}
+      m[gpxName(rec)] = Date.now();
+      const keys = Object.keys(m);
+      if (keys.length > 80){
+        keys.sort((a, b)=>(m[a] || 0) - (m[b] || 0))
+            .slice(0, keys.length - 80)
+            .forEach(k=>{ delete m[k]; });
+      }
+      localStorage.setItem(DL_STORE, JSON.stringify(m));
+    }catch(e){}
+  }
+
   function downloadGpx(rec){
     try{
       const blob = new Blob([exportGpx(rec)], {type:'application/gpx+xml'});
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = rec.filename || trackFilename(rec.start);
+      a.download = gpxName(rec);
       document.body.appendChild(a);
       a.click();
       a.remove();
+      markGpxDownloaded(rec);
       setTimeout(()=>{ URL.revokeObjectURL(url); }, 5000);
     }catch(e){}
   }
@@ -1173,7 +1206,12 @@
         if (e && e.name === 'AbortError') return;   // condivisione annullata
       }
     }
-    // niente condivisione file: scarica il .gpx e indica come aprirlo
+    // niente condivisione file: scarica il .gpx e indica come aprirlo.
+    // Se il file è già stato scaricato non lo riscarica: evita la richiesta "Scaricare di nuovo?".
+    if (downloadedGpx(rec)){
+      toast(tr('tAlreadyDownloaded'));
+      return;
+    }
     downloadGpx(rec);
     toast(tr('tOpenFallback'));
   }

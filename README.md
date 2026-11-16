@@ -68,7 +68,9 @@ e la **velocità media di viaggio**.
   esportato** come punti interpolati, così il percorso non ha interruzioni),
   **SCARICA** il file `.gpx` (nella cartella Download) oppure **ELIMINA** la traccia.
   Nell'anteprima il tasto **VISUALIZZA SU GPS OSMAND** passa il file a OsmAnd (o a un'altra app compatibile)
-  (se il telefono non supporta la condivisione file, scarica il `.gpx` e mostra come aprirlo).
+  (se il telefono non supporta la condivisione file, scarica il `.gpx` e mostra come aprirlo). Se il file è già
+  stato scaricato in precedenza, il tasto non lo riscarica e mostra **"File già scaricato"**, evitando la
+  richiesta *"Scaricare di nuovo?"* del browser; per riscaricarlo usa **SCARICA .GPX**.
   Nell'archivio il tasto **home** (in alto a destra) riporta alla schermata principale; il **tasto indietro**
   di Android chiude il pannello aperto e, dalla home, avvisa al primo tocco (*Premi di nuovo indietro per
   uscire*) e chiude l'app al secondo tocco ravvicinato.

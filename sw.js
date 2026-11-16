@@ -1,4 +1,4 @@
-const CACHE = 'tripreg2-v24';
+const CACHE = 'tripreg2-v25';
 const ASSETS = [
   './',
   './index.html',
