@@ -17,6 +17,9 @@ e la **velocità media di viaggio**.
   configurare. Comandi: **zoom + / −**, **trascinamento** con un dito e tasto per **inquadrare tutto il percorso**.
   Le mappe vengono servite dalla rete: **senza connessione** l'anteprima ripiega da sola sulla griglia scura e la
   traccia resta perfettamente visibile.
+- **Buchi di segnale completati sulla mappa**: se il GPS perde la ricezione, l'anteprima unisce il punto di perdita
+  e quello di ripresa con una linea **tratteggiata** (tratto simulato, indicato in legenda). Distanza, media e file
+  GPX restano quelli realmente misurati.
 - **Tasto home nell'archivio**: in alto a destra, accanto alla ✕, riporta subito alla schermata principale.
 - **Home più uniforme**: tutti i tasti hanno la stessa dimensione del testo di **AVVIA**; la **media** è mostrata
   senza decimali (es. `42 km/h`).
@@ -56,7 +59,9 @@ e la **velocità media di viaggio**.
   (mappa a tutto schermo con le **mappe OpenStreetMap** sotto la traccia e la **vista satellite** a un tocco:
   traccia in ciano, partenza **A** verde, arrivo **B** rosso, barra di scala, indicatore nord e statistiche con
   distanza, durata, punti e media; **zoom + / −**, **trascinamento** con un dito e tasto per **inquadrare tutto
-  il percorso**; senza connessione resta la griglia scura con la traccia, nessuna app esterna necessaria),
+  il percorso**; senza connessione resta la griglia scura con la traccia, nessuna app esterna necessaria;
+  i buchi di segnale sono completati da un **tratto tratteggiato simulato** che unisce perdita e ripresa del
+  segnale, mentre distanza e file GPX restano quelli realmente misurati),
   **SCARICA** il file `.gpx` (nella cartella Download) oppure **ELIMINA** la traccia.
   nell'anteprima trovi anche il collegamento facoltativo per aprire il file con **GPX Viewer**.
   Nell'archivio il tasto **home** (in alto a destra) riporta alla schermata principale; il **tasto indietro**
@@ -136,3 +141,5 @@ Poi apri `http://localhost:8010` sul telefono: `localhost` è considerato sicuro
 - Distanza calcolata in linea retta tra i punti: su percorsi molto tortuosi la stima è leggermente inferiore al reale.
 - La velocità attuale è una stima filtrata: in caso di segnale scarso può oscillare o restare a 0.
 - La mappa dell'anteprima (OpenStreetMap e satellite Esri) richiede connessione: offline resta la griglia con la traccia.
+- Nei buchi di segnale il tratto tratteggiato è una **simulazione in linea retta**: il percorso realmente fatto
+  durante la perdita del GPS non è noto e non viene aggiunto alla distanza né al file GPX.

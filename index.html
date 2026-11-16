@@ -551,7 +551,7 @@
       pvPoints:'PUNTI', pvAvg:'MEDIA', pvEmpty:'Questa traccia non contiene punti.',
       btnPvDownload:'SCARICA .GPX', btnClose:'CHIUDI', pvExt:'Apri con GPX Viewer',
       pvZoomIn:'Ingrandisci la mappa', pvZoomOut:'Riduci la mappa', pvFit:'Inquadra tutto il percorso',
-      pvStyle:'Cambia mappa: strade o satellite',
+      pvStyle:'Cambia mappa: strade o satellite', pvSim:'tratto simulato',
       sLang:'LINGUA', sLangDesc:'Scegli la lingua dell\'app',
       ariaSettings:'Impostazioni', ariaClose:'Chiudi', ariaHome:'Torna alla home',
       exitHint:'Premi di nuovo indietro per uscire'
@@ -589,7 +589,7 @@
       pvPoints:'POINTS', pvAvg:'AVG', pvEmpty:'This track has no points.',
       btnPvDownload:'DOWNLOAD .GPX', btnClose:'CLOSE', pvExt:'Open with GPX Viewer',
       pvZoomIn:'Zoom in on the map', pvZoomOut:'Zoom out of the map', pvFit:'Fit the whole route',
-      pvStyle:'Switch map: streets or satellite',
+      pvStyle:'Switch map: streets or satellite', pvSim:'simulated section',
       sLang:'LANGUAGE', sLangDesc:'Choose the app language',
       ariaSettings:'Settings', ariaClose:'Close', ariaHome:'Back to home',
       exitHint:'Press back again to exit'
@@ -1438,16 +1438,39 @@
       return { x: p.mx * world - ox, y: p.my * world - oy };
     }
 
-    // percorso: un tratto per ogni segmento GPX (nessuna linea inventata nei buchi di segnale)
+    // percorso: un tratto per ogni segmento GPX; i buchi di segnale vengono completati
+    // con una linea tratteggiata che unisce perdita e ripresa del segnale (tratto simulato)
     const path = new Path2D();
+    const gaps = new Path2D();
+    let gapCount = 0;
     let prevSeg = pts[0].seg, started = false;
     for (let i = 0; i < pts.length; i++){
       const q = proj(pts[i]);
-      if (!started || pts[i].seg !== prevSeg){ path.moveTo(q.x, q.y); started = true; prevSeg = pts[i].seg; }
+      if (!started || pts[i].seg !== prevSeg){
+        if (started){
+          const p0 = proj(pts[i-1]);
+          gaps.moveTo(p0.x, p0.y); gaps.lineTo(q.x, q.y);
+          gapCount++;
+        }
+        path.moveTo(q.x, q.y); started = true; prevSeg = pts[i].seg;
+      }
       else path.lineTo(q.x, q.y);
     }
     ctx.lineJoin = 'round';
     ctx.lineCap = 'round';
+    // tratti simulati prima della traccia reale: i punti di perdita/ripresa restano netti
+    if (gapCount){
+      ctx.setLineDash([8, 7]);
+      ctx.lineCap = 'butt';
+      ctx.strokeStyle = 'rgba(2,6,10,.8)';
+      ctx.lineWidth = 6;
+      ctx.stroke(gaps);
+      ctx.strokeStyle = 'rgba(34,211,238,.85)';
+      ctx.lineWidth = 2.6;
+      ctx.stroke(gaps);
+      ctx.setLineDash([]);
+      ctx.lineCap = 'round';
+    }
     ctx.strokeStyle = 'rgba(2,6,10,.85)';
     ctx.lineWidth = 6;
     ctx.stroke(path);
@@ -1491,6 +1514,26 @@
       ctx.closePath();
       ctx.fillStyle = fill;
       ctx.fill();
+    }
+
+    // legenda del tratto simulato (visibile solo quando c'è almeno un buco di segnale)
+    if (gapCount){
+      ctx.font = '600 9.5px "Rajdhani", system-ui, sans-serif';
+      const label = tr('pvSim');
+      const tw = ctx.measureText(label).width;
+      const cw = Math.ceil(tw) + 34;
+      chipRound(10, 12, cw, 20, 6, 'rgba(6,12,18,.62)');
+      ctx.strokeStyle = 'rgba(34,211,238,.9)';
+      ctx.lineWidth = 2;
+      ctx.lineCap = 'butt';
+      ctx.setLineDash([5, 4]);
+      ctx.beginPath(); ctx.moveTo(17, 22); ctx.lineTo(35, 22); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.lineCap = 'round';
+      ctx.fillStyle = 'rgba(232,238,247,.85)';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(label, 41, 22.5);
     }
 
     // fonte della mappa (obbligatoria quando le tessere sono visibili)
