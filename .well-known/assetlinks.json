@@ -7,4 +7,14 @@
       "1F:22:10:B4:FB:0E:44:9A:DB:46:5E:74:FE:DA:DA:95:7B:65:15:DA:42:EA:2F:B6:72:3D:01:AD:D3:A8:4E:28"
     ]
   }
+},
+{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "com.tripregolarita.app2",
+    "sha256_cert_fingerprints": [
+      "E5:24:6A:16:6B:5A:D7:8C:1A:AE:20:00:42:A1:3F:27:2C:6F:54:6C:52:0D:D5:44:20:6A:F6:97:15:8D:0C:AB"
+    ]
+  }
 }]

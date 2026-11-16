@@ -1235,7 +1235,7 @@
   // Apertura diretta (app Android Trip Reg ≥ 2.0.5): il GPX, compresso, viaggia in un link tripreg://
   // gestito dall'app, che lo passa a OsmAnd senza scaricare alcun file. Chrome non lascia
   // condividere i .gpx dal browser, per questo serve l'app nativa.
-  const NATIVE_PKG = 'com.tripregolarita.app';
+  const NATIVE_PKG = 'com.tripregolarita.app2';
 
   async function gzipB64url(text){
     const stream = new Blob([text]).stream().pipeThrough(new CompressionStream('gzip'));
