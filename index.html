@@ -71,7 +71,7 @@
   .dot.error{background:var(--red)}
   @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(52,211,153,.55)}70%{box-shadow:0 0 0 9px rgba(52,211,153,0)}100%{box-shadow:0 0 0 0 rgba(52,211,153,0)}}
 
-  .badge{font:600 11.5px/1 var(--mono);padding:8px 11px;border-radius:999px;background:#121b26;border:1px solid #223040;color:#9fb2c8;white-space:nowrap}
+  .badge{font:600 12px/1 var(--mono);padding:9px 12px;border-radius:999px;background:#121b26;border:1px solid #223040;color:#9fb2c8;white-space:nowrap}
   .badge.ok{background:rgba(52,211,153,.14);border-color:rgba(52,211,153,.45);color:#6ee7b7}
   .badge.weak{background:rgba(251,191,36,.14);border-color:rgba(251,191,36,.45);color:#fcd34d}
   .badge.error{background:rgba(248,113,113,.14);border-color:rgba(248,113,113,.45);color:#fca5a5}
@@ -93,12 +93,12 @@
   .c-speed{--accent:#f87171;border-color:#17423a;box-shadow:0 10px 26px rgba(0,0,0,.35), inset 0 1px 0 rgba(52,211,153,.14)}
   .c-count{--accent:#34d399}
   .label{display:flex;align-items:center;gap:8px;font-family:'Chakra Petch',system-ui,sans-serif;
-    font-size:12.5px;letter-spacing:.18em;font-weight:700;color:var(--amber);margin-bottom:6px;line-height:1.25}
+    font-size:13px;letter-spacing:.16em;font-weight:700;color:var(--amber);margin-bottom:8px;line-height:1.25}
   .label::before{content:'';flex:0 0 auto;width:7px;height:11px;background:currentColor;
     transform:skewX(-24deg);border-radius:1px}
   .label.cyan{color:var(--cyan)}
   .label.green{color:var(--green)}
-  .label .hint{display:block;font:700 10.5px/1.3 system-ui,sans-serif;letter-spacing:.02em;color:var(--muted);margin-top:3px}
+  .label .hint{display:block;font:700 11.5px/1.3 system-ui,sans-serif;letter-spacing:.02em;color:#9fb2c8;margin-top:3px}
   .big{display:flex;align-items:baseline;gap:9px;font-family:'Rajdhani',system-ui,sans-serif;
     font-variant-numeric:tabular-nums;font-weight:700;letter-spacing:.01em;line-height:1}
   #partialM,#totalKm,#vignetta{font-size:clamp(34px,min(17vw,11.5vh),92px);color:var(--cyan);text-shadow:0 0 34px rgba(34,211,238,.22)}
@@ -122,7 +122,7 @@
   .speed-grid.no-avg .side{border-left:0;padding-left:0}
   #avgSpeed{font-size:clamp(26px,min(12.5vw,9vh),64px);color:var(--red);text-shadow:0 0 28px rgba(248,113,113,.22)}
   #nowSpeed{font-size:clamp(26px,min(12.5vw,9vh),64px);color:var(--red);text-shadow:0 0 22px rgba(248,113,113,.18)}
-  .unit{font:800 12px/1 var(--mono);letter-spacing:.04em;color:var(--muted);white-space:nowrap}
+  .unit{font:800 13px/1 var(--mono);letter-spacing:.04em;color:#9fb2c8;white-space:nowrap}
 
   /* pulsanti "tasto meccanico" rally: faccia bombata, spigolo, corsa alla pressione */
   .btn{--face-top:#fcd34d;--face-mid:#fbbf24;--face-bot:#d97706;--edge:#92400e;color:#241a02;
@@ -225,21 +225,22 @@
     stroke-linecap:round;stroke-linejoin:round}
   .preview-stats{flex:0 0 auto;display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px}
   .pv-stat{background:#0d141c;border:1px solid #1d2c3a;border-radius:10px;padding:8px 5px 9px;text-align:center}
-  .pv-k{font:700 9px/1.1 'Chakra Petch',system-ui,sans-serif;letter-spacing:.1em;color:var(--muted);margin-bottom:5px}
-  .pv-v{font:700 16px/1 'Rajdhani',system-ui,sans-serif;font-variant-numeric:tabular-nums;color:#e8eef7}
-  .pv-v small{font:700 9.5px/1 var(--mono);color:var(--muted);letter-spacing:.02em}
+  .pv-k{font:700 10.5px/1.15 'Chakra Petch',system-ui,sans-serif;letter-spacing:.08em;color:#9fb2c8;margin-bottom:6px}
+  .pv-v{font:700 19px/1 'Rajdhani',system-ui,sans-serif;font-variant-numeric:tabular-nums;color:#e8eef7}
+  .pv-v small{font:700 11px/1 var(--mono);color:#9fb2c8;letter-spacing:.02em}
   /* tre tasti compatti in una riga: scarica, chiudi, visualizza in OsmAnd */
-  .preview-actions{flex:0 0 auto;display:grid;grid-template-columns:.86fr 1.65fr;gap:6px;margin-top:10px}
-  .preview-actions .btn{min-height:44px;font-size:10.5px;letter-spacing:.03em;padding:0 6px;line-height:1.15}
+  .preview-actions{flex:0 0 auto;display:grid;grid-template-columns:.86fr 1.4fr;gap:10px;margin-top:12px;padding-bottom:4px}
+  .preview-actions .btn{min-height:50px;font-size:12.5px;letter-spacing:.04em;padding:0 8px;line-height:1.2}
   .btn-green{--face-top:#a7f3d0;--face-mid:#34d399;--face-bot:#0d9488;--edge:#065f46;color:#052e22}
   /* schermi molto stretti: i tre tasti restano su una riga sola */
   @media (max-width:345px){
-    .preview-actions .btn{font-size:10px;letter-spacing:.01em;padding:0 4px}
+    .preview-actions .btn{font-size:11.5px;letter-spacing:.01em;padding:0 4px}
   }
-  .setting-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 0;cursor:pointer}
-  .setting-name{font-family:'Chakra Petch',system-ui,sans-serif;font-weight:700;font-size:15px;letter-spacing:.04em;color:#e8eef7}
-  .setting-desc{font-size:12.5px;color:var(--muted);margin-top:3px;line-height:1.35}
-  .sheet-note{margin:10px 0 0;font-size:11.5px;line-height:1.45;color:var(--muted)}
+  .setting-row{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 0;cursor:pointer;
+    border-bottom:1px solid rgba(255,255,255,.05)}
+  .setting-name{font-family:'Chakra Petch',system-ui,sans-serif;font-weight:700;font-size:15.5px;letter-spacing:.04em;color:#e8eef7}
+  .setting-desc{font-size:13px;color:#9fb2c8;margin-top:4px;line-height:1.4}
+  .sheet-note{margin:12px 0 0;font-size:12.5px;line-height:1.5;color:#9fb2c8}
   .switch{appearance:none;-webkit-appearance:none;width:52px;height:30px;border-radius:999px;background:#223040;
     border:1px solid #2c4052;position:relative;cursor:pointer;flex:0 0 auto;margin:0;
     box-shadow:inset 0 3px 6px rgba(0,0,0,.5);
@@ -266,24 +267,24 @@
     box-shadow:inset 0 2px 1px rgba(255,255,255,.5),inset 0 -4px 6px rgba(0,0,0,.22),0 3px 0 #065f46,0 5px 8px rgba(0,0,0,.45)}
 
   /* elenco delle tracce GPS salvate */
-  .track-list{display:flex;flex-direction:column;gap:8px;margin-bottom:10px;
+  .track-list{display:flex;flex-direction:column;gap:10px;margin-bottom:10px;
     max-height:min(52vh,420px);overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
   .track-item{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 10px;
-    background:#0d141c;border:1px solid #1d2c3a;border-radius:12px;padding:10px 11px}
+    background:#0d141c;border:1px solid #1d2c3a;border-radius:12px;padding:12px 13px}
   .track-info{flex:1 1 130px;min-width:0}
-  .track-name{font-family:'Chakra Petch',system-ui,sans-serif;font-weight:700;font-size:13.5px;
+  .track-name{font-family:'Chakra Petch',system-ui,sans-serif;font-weight:700;font-size:14.5px;
     letter-spacing:.03em;color:#e8eef7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .track-meta{font:600 11px/1.35 var(--mono);color:var(--muted);margin-top:3px;
+  .track-meta{font:600 12px/1.4 var(--mono);color:#9fb2c8;margin-top:4px;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .track-actions{display:flex;gap:6px;flex:0 0 auto;margin-left:auto}
-  .mini-btn{appearance:none;-webkit-appearance:none;cursor:pointer;padding:9px 10px;border-radius:9px;
+  .mini-btn{appearance:none;-webkit-appearance:none;cursor:pointer;padding:11px 12px;min-height:40px;border-radius:9px;
     border:1px solid #2c4052;background:linear-gradient(180deg,#1b2531,#0f1720);color:#cbd5e1;
-    font:700 10.5px/1 'Chakra Petch',system-ui,sans-serif;letter-spacing:.08em;
+    font:700 11.5px/1 'Chakra Petch',system-ui,sans-serif;letter-spacing:.07em;
     box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 2px 0 #060b11}
   .mini-btn:active{transform:translateY(2px);box-shadow:inset 0 2px 4px rgba(0,0,0,.5)}
   .mini-btn.open{color:#6ee7b7;border-color:rgba(52,211,153,.45)}
   .mini-btn.danger{color:#fca5a5;border-color:rgba(248,113,113,.42)}
-  .track-empty{padding:16px 6px;text-align:center;color:var(--muted);font-size:12.5px;line-height:1.45}
+  .track-empty{padding:20px 8px;text-align:center;color:#9fb2c8;font-size:13.5px;line-height:1.5}
 
   @media (max-width:420px){
     .brand{font-size:15px;letter-spacing:.07em}
@@ -291,7 +292,7 @@
     .gear{width:37px;height:37px}
     .top-actions{gap:6px}
     .seg-btn{min-width:46px;padding:0 9px;font-size:12px}
-    .mini-btn{padding:8px}
+    .mini-btn{padding:10px 9px}
   }
   @media (max-width:380px){
     .ver{display:none}
@@ -307,6 +308,46 @@
     #toast{bottom:calc(146px + env(safe-area-inset-bottom))}
     main{gap:8px}
     .speed-grid{gap:8px}
+  }
+  /* orizzontale (telefono): quattro card su due colonne e i comandi in una colonna a destra,
+     così nulla va scorso e AVVIA/STOP restano sempre a portata di pollice */
+  @media (orientation:landscape) and (max-height:540px){
+    .wrap{max-width:none;padding:4px 12px 8px;gap:6px}
+    .top{padding:2px 2px 6px}
+    .brand{font-size:15px}
+    .badge{padding:7px 11px}
+    .gear{width:36px;height:36px}
+    main{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(150px,220px);
+      grid-template-rows:repeat(2,minmax(0,1fr));gap:8px}
+    main > .card{padding:8px 14px 10px;min-height:0}
+    main > .card.c-count{flex:none}
+    main:has(.c-speed.off) > .c-count{grid-column:1 / span 2}
+    .label{font-size:12px;margin-bottom:3px;letter-spacing:.12em}
+    .card .btn{margin-top:8px !important;min-height:38px;font-size:15px}
+    #partialM,#totalKm{font-size:clamp(30px,13vh,72px)}
+    #vignetta{font-size:clamp(26px,10vh,54px)}
+    #avgSpeed,#nowSpeed{font-size:clamp(26px,11vh,60px)}
+    .sticky-action{position:static;transform:none;left:auto;bottom:auto;width:auto;max-width:none;
+      grid-column:3;grid-row:1 / -1;padding:0;background:none;gap:8px}
+    .sticky-action::before{display:none}
+    .sticky-action .btn{flex:1 1 0;min-height:0;font-size:16px}
+    #toast{bottom:12px}
+    /* pannelli a tutto schermo: mappa a sinistra, dati e tasti a destra */
+    .sheet-full{padding-bottom:calc(14px + env(safe-area-inset-bottom))}
+    .sheet-full .sheet-head{margin-bottom:6px}
+    #previewPanel .sheet-full{display:grid;grid-template-columns:minmax(0,1fr) minmax(190px,240px);
+      grid-template-rows:auto minmax(0,1fr) auto;column-gap:12px}
+    #previewPanel .sheet-head{grid-column:1 / -1}
+    #previewPanel .preview-wrap{grid-column:1;grid-row:2 / 4}
+    #previewPanel .preview-stats{grid-column:2;grid-row:2;grid-template-columns:1fr;margin-top:0;
+      align-content:start;gap:5px;overflow:auto}
+    #previewPanel .pv-stat{display:flex;align-items:baseline;justify-content:space-between;gap:8px;
+      padding:7px 10px;text-align:left}
+    #previewPanel .pv-k{margin-bottom:0}
+    #previewPanel .preview-actions{grid-column:2;grid-row:3;grid-template-columns:1fr;gap:8px;margin-top:8px;padding-bottom:0}
+    #previewPanel .preview-actions .btn{min-height:46px}
+    .sheet{max-height:calc(100dvh - 16px)}
+    .backdrop{padding-top:8px;padding-bottom:8px}
   }
 </style>
 </head>
@@ -1245,27 +1286,37 @@
     return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
   }
 
-  // true se l'app ha preso in carico la traccia (la pagina passa in secondo piano); false → si usa il ripiego
+  // true se la traccia è stata consegnata all'app; false solo se l'app non c'è → si usa il ripiego (condivisione/download)
   async function openInOsmand(rec){
     if (!/Android/i.test(navigator.userAgent) || typeof CompressionStream === 'undefined') return false;
     let z = '';
     try{ z = await gzipB64url(exportGpx(rec)); }catch(e){ return false; }
     if (!z || z.length > 700000) return false;   // troppo grande per un intent: ripiego
-    const fallback = location.href.split('#')[0] + '#osmand';   // app non aggiornata: resta qui, niente Play Store
+    // Se l'app non è installata Chrome carica questo indirizzo: è l'unico segnale affidabile di
+    // fallimento. In tutti gli altri casi l'apertura è delegata all'app e non si scarica nulla.
+    const FB = '#osmand';
+    const base = location.href.split('#')[0];
+    try{ if (location.hash === FB) history.replaceState(null, '', base); }catch(e){}
     const url = 'intent://open?n=' + encodeURIComponent(gpxName(rec)) + '&z=' + z
       + '#Intent;scheme=tripreg;package=' + NATIVE_PKG
-      + ';S.browser_fallback_url=' + encodeURIComponent(fallback) + ';end';
+      + ';S.browser_fallback_url=' + encodeURIComponent(base + FB) + ';end';
     return new Promise(resolve=>{
-      let left = document.visibilityState === 'hidden';
-      const onHide = ()=>{ if (document.visibilityState === 'hidden') left = true; };
-      document.addEventListener('visibilitychange', onHide);
-      window.addEventListener('pagehide', onHide);
-      try{ location.href = url; }catch(e){}
-      setTimeout(()=>{
-        document.removeEventListener('visibilitychange', onHide);
-        window.removeEventListener('pagehide', onHide);
-        resolve(left);
-      }, 3000);
+      let done = false, timer = 0;
+      const finish = ok=>{
+        if (done) return;
+        done = true;
+        clearTimeout(timer);
+        window.removeEventListener('hashchange', onHash);
+        resolve(ok);
+      };
+      const onHash = ()=>{
+        if (location.hash !== FB) return;
+        try{ history.replaceState(null, '', base); }catch(e){}
+        finish(false);
+      };
+      window.addEventListener('hashchange', onHash);
+      timer = setTimeout(()=>finish(true), 4000);
+      try{ location.href = url; }catch(e){ finish(false); }
     });
   }
 
