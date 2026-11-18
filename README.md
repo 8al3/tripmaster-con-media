@@ -10,9 +10,10 @@ e la **velocità media di viaggio**.
   `tripreg://open`, gestito da `OpenGpxActivity`, che lo salva nella cache e lo apre in OsmAnd (Plus, gratuita o nightly).
   Se l'app non è aggiornata o OsmAnd manca, il pulsante ricade sul vecchio comportamento (condivisione o download).
 - **Rimosso il tasto grigio CHIUDI** dall'anteprima: si chiude con la ✕ in alto.
-- Per installare l'APK 2.0.5: `app-release-unsigned-2.0.5.apk` va firmato con la stessa chiave di prima
-  (`.\firma-apk.ps1`, chiede la password della keystore) e installato sopra la versione attuale. La parte web
-  (`index.html`) va pubblicata su GitHub Pages come sempre.
+- **Versione definitiva**: `Trip_Reg_2.0.5-FIRMATO.apk`, già firmata con `trip-nuova.keystore` (alias `trip`).
+  Installala sopra la versione attuale: non servono altri APK né script di firma. La parte web
+  (`index.html`, `sw.js`, `manifest.webmanifest`, font e icone) resta pubblicata su GitHub Pages.
+- Impronta dell'APK finale (SHA-256): `2aa22014e9dce287cfe8de68618d2c83a886be91f4407c6b63575f4b0916f22e`.
 
 ## Novità della 2.0.4
 
@@ -105,33 +106,29 @@ e la **velocità media di viaggio**.
 - Funziona **offline** dopo il primo caricamento (service worker).
 - **Modalità demo**: aggiungi `?demo=1` (o `#demo`) all'indirizzo per simulare uno spostamento senza muoverti.
 
-## Test sul telefono (5 minuti)
+## Installazione e test sul telefono
 
-1. Doppio click su **`avvia.cmd`** sul PC: avvia il server locale (porta **8010**, per non interferire con la 1.0) e un tunnel HTTPS Cloudflare.
-2. Nella finestra nera compare un link tipo `https://xxxx-xxxx.trycloudflare.com`.
-3. Apri quel link con **Chrome su Android**.
-4. Consenti l'accesso alla posizione quando richiesto.
-5. Menu ⋮ di Chrome → **Installa app** (o *Aggiungi a schermata Home*): ora parte a schermo intero come un'app.
-6. Premi **AVVIA** e cammina o guida.
+1. Copia **`Trip_Reg_2.0.5-FIRMATO.apk`** sul telefono e installalo (consenti l'installazione da fonti sconosciute).
+2. Apri l'app: si collega direttamente alla versione pubblicata su GitHub Pages.
+3. Consenti l'accesso alla posizione quando richiesto, premi **AVVIA** e cammina o guida.
 
-> Il link del tunnel è temporaneo: cambia a ogni avvio e funziona solo se il PC è acceso e la finestra resta aperta.
 > Un indirizzo `http://192.168.x.x` **non** funziona: Android blocca il GPS se la connessione non è HTTPS.
+> Per provare una modifica locale alla parte web, avvia il server con `node serve.js 8010` e usa il collegamento USB qui sotto.
 
-### Alternativa senza internet — USB
+### Test locale via USB
 
 ```powershell
 # una volta sola: installa platform-tools e attiva il debug USB sul telefono
 adb reverse tcp:8010 tcp:8010
 ```
 
-Poi apri `http://localhost:8010` sul telefono: `localhost` è considerato sicuro, quindi il GPS funziona.
+Poi avvia `node serve.js 8010` e apri `http://localhost:8010` su Chrome Android: `localhost` è considerato sicuro,
+quindi il GPS funziona.
 
-### Alternativa permanente — hosting
+### Pubblicazione
 
-- Trascina la cartella su **app.netlify.com/drop** (gratis, HTTPS incluso), oppure usa GitHub Pages.
-- Con l'app online puoi generare un **APK** con [PWABuilder](https://www.pwabuilder.com/) (Trusted Web Activity),
-  installabile da file senza Play Store.
-- In alternativa si può rifare l'app in Kotlin nativo e compilare l'APK con Android Studio.
+- La versione web è su GitHub Pages; l'APK la apre come Trusted Web Activity.
+- Se serve ricompilare l'APK: `.\gradlew assembleRelease` (le cartelle `build/` e `.gradle/` si rigenerano da sole).
 
 ## Come vengono calcolate distanza e velocità
 
@@ -148,14 +145,18 @@ Poi apri `http://localhost:8010` sul telefono: `localhost` è considerato sicuro
 
 | File | Ruolo |
 |---|---|
+| `Trip_Reg_2.0.5-FIRMATO.apk` | APK definitivo firmato (2.0.5, codice 7) |
 | `index.html` | tutta l'app (UI, GPS, calcoli, media) |
 | `manifest.webmanifest` | identità dell'app installabile (nome, icone, colori) |
 | `sw.js` | service worker, funzionamento offline |
-| `icon-*.png` | icone app |
+| `icon-*.png`, `fonts/*.woff2` | icone e font usati dalla PWA |
 | `serve.js` | server statico minimale (`node serve.js 8010`) |
-| `avvia.cmd` | avvia server + tunnel HTTPS |
-| `tools/cloudflared.exe` | binario del tunnel (portabile, nessuna installazione) |
 | `make-icons.ps1` | rigenera le icone |
+| `twa-manifest.json` | configurazione TWA (bubblewrap) |
+| `trip-nuova.keystore`, `CHIAVE-PASSWORD-NON-PERDERE.txt` | chiave di firma definitiva — **non eliminare** |
+| `.well-known/assetlinks.json` | Digital Asset Links per l'app Android |
+| `app/src`, `build.gradle`, `settings.gradle`, `gradle.properties`, `gradlew*`, `gradle/`, `local.properties` | sorgenti e configurazione per ricompilare l'APK |
+| `anteprima-*.png` | schermate di riferimento dell'interfaccia |
 
 ## Limiti noti
 
