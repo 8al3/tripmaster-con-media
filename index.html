@@ -220,6 +220,7 @@
   .settings-full .sheet-head{margin-bottom:10px}
   .settings-full .sheet-title{font-size:16px}
   .settings-full .sheet-note{margin-top:16px}
+  #gpxNote{white-space:pre-line}
   /* anteprima traccia: mappa disegnata nell'app, senza app esterne */
   .preview-wrap{position:relative;flex:1 1 auto;min-height:0;border:1px solid #1d3a48;border-radius:14px;
     overflow:hidden;background:#060c12;box-shadow:inset 0 0 34px rgba(0,0,0,.62)}
@@ -455,7 +456,11 @@
       </div>
     </div>
     <p class="sheet-note" id="sheetNote">Media e velocità continuano a essere calcolate anche quando nascoste.</p>
-    <p class="sheet-note" id="gpxNote">La traccia parte con AVVIA e viene salvata automaticamente nell'archivio Tracce GPS quando premi STOP. Apri Tracce GPS per scaricare il file .gpx (Google Maps: mymaps.google.com → Crea mappa → Importa). Chiudendo l'app la traccia non viene salvata, i tratti non coperti da GPS vengono comunque segnati e calcolati.</p>
+    <p class="sheet-note" id="gpxNote">La registrazione della traccia parte se "Registra traccia" è attivo, altrimenti non viene registrata.
+La registrazione della traccia si interrompe quando premi "stop" o "reset totale" e viene salvata nell'archivio.
+Apri Tracce GPS per vedere l'anteprima.
+Visualizza su App del telefono con Osmand
+Scarica GPX e importa il file per PC in Google/MyMaps</p>
   </section>
 </div>
 
@@ -589,7 +594,7 @@
       sShowAvg:'Visualizza media?', sShowAvgDesc:'Mostra la media (km/h)',
       sShowNow:'Visualizza velocità attuale?', sShowNowDesc:'Mostra la velocità attuale (km/h)',
       sSaveTrack:'Registra traccia GPS?', sSaveTrackDesc:'Salva il percorso in Tracce GPS quando premi STOP',
-      sGpxNote:'La traccia parte con AVVIA e viene salvata automaticamente nell\'archivio Tracce GPS quando premi STOP. Apri Tracce GPS per vedere il percorso nell\'app o scaricare il file .gpx (Google Maps: mymaps.google.com → Crea mappa → Importa). Chiudendo l\'app la traccia non viene salvata, i tratti non coperti da GPS vengono comunque segnati e calcolati.',
+      sGpxNote:'La registrazione della traccia parte se "Registra traccia" è attivo, altrimenti non viene registrata.\nLa registrazione della traccia si interrompe quando premi "stop" o "reset totale" e viene salvata nell\'archivio.\nApri Tracce GPS per vedere l\'anteprima.\nVisualizza su App del telefono con Osmand\nScarica GPX e importa il file per PC in Google/MyMaps',
       sNote:'Media e velocità continuano a essere calcolate anche quando nascoste.',
       sTracks:'TRACCE GPS', btnTracks:'TRACCE GPS',
       tracksNote:'Le tracce vengono salvate automaticamente quando premi STOP. APRI mostra il percorso qui nell\'app, SCARICA salva il file .gpx.',
@@ -628,7 +633,7 @@
       sShowAvg:'Show average?', sShowAvgDesc:'Shows the average (km/h)',
       sShowNow:'Show current speed?', sShowNowDesc:'Shows the current speed (km/h)',
       sSaveTrack:'Record GPS track?', sSaveTrackDesc:'Saves the route in GPS Tracks when you press STOP',
-      sGpxNote:'The track starts with START and is automatically saved in the GPS Tracks archive when you press STOP. Open GPS Tracks to see the route in the app or download the .gpx file (Google Maps: mymaps.google.com → Create a map → Import). If the app is closed, the track is not saved; stretches not covered by GPS are still recorded and calculated.',
+      sGpxNote:'Track recording starts if "Record track" is on, otherwise nothing is recorded.\nTrack recording stops when you press "stop" or "total reset" and is saved in the archive.\nOpen GPS Tracks to see the preview.\nView it on your phone app with Osmand\nDownload the GPX file and import it on PC in Google/MyMaps',
       sNote:'Average and speed keep being calculated even when hidden.',
       sTracks:'GPS TRACKS', btnTracks:'GPS TRACKS',
       tracksNote:'Tracks are saved automatically when you press STOP. OPEN shows the route here in the app, DOWNLOAD saves the .gpx file.',
